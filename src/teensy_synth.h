@@ -5,6 +5,7 @@
 #include "settings.h"
 #include "dsp/synth_plaits_f32.h"
 #include "dsp/filter_moog_f32.h"
+#include "dsp/effect_ensemble_f32.h"
 #include <OpenAudio_ArduinoLibrary.h>
 
 class TeensySynth
@@ -24,25 +25,77 @@ public:
     //MIDI control change message handler
     void OnControlChange(uint8_t channel, uint8_t control, uint8_t value);
 
-    //Set lowpass filter cutoff frequency in Hz. Affects all oscillators.
+    inline void setSynthEngine(float engine)
+    {
+        if (engine < 0.0f)
+            engine = 0.0f;
+        if (engine > 1.0f)
+            engine = 1.0f;
+        updateEngine();
+    }
+
+    //Set lowpass filter cutoff frequency in Hz. Affects all oscillators. Range: 20.0f - 19200.0f (on 48kHz sample rate)
     inline void setFilterCutoff(float cutoff)
     {
+        if (cutoff < 20.0f)
+            cutoff = 20.0f;
+        if (cutoff > filterMaxFreq)
+            cutoff = filterMaxFreq;
         currentPatch.filterCutoff = cutoff;
         updateFilter();
     }
 
-    //Set lowpass filter resonance (Q value). Affects all oscillators.
+    inline float getFilterCutoff()
+    {
+        return currentPatch.filterCutoff;
+    }
+
+    //Set lowpass filter resonance (Q value). Affects all oscillators. Range: 0.7f - 5.0f
     inline void setFilterResonance(float resonance)
     {
+        if (resonance < 0.1f)
+            resonance = 0.1f;
+        if (resonance > 10.0f)
+            resonance = 10.0f;         
         currentPatch.filterResonance = resonance;
         updateFilter();
     }
 
-    //Set lowpass filter overdrive amount. Affects all oscillators.
-    inline void setFilterDrive(float resonance)
+    inline float getFilterResonance()
     {
-        currentPatch.filterResonance = resonance;
+        return currentPatch.filterResonance;
+    }
+
+    //Set lowpass filter overdrive amount. Affects all oscillators. Range: 0.1f - 10.0f
+    inline void setFilterDrive(float drive)
+    {
+        if (drive < 0.1f)
+            drive = 0.1f;
+        if (drive > 10.0f)
+            drive = 10.0f;            
+        currentPatch.filterDrive = drive;
         updateFilter();
+    }
+
+    //Set oscillator parameter "harmonics". Affects all oscillators.
+    inline void setOscillatorHarmonics(float harmonics)
+    {
+        currentPatch.harmonics=harmonics;
+        updateOscillator();
+    }
+
+    //Set oscillator parameter "timbre". Affects all oscillators.
+    inline void setOscillatorTimbre(float timbre)
+    {
+        currentPatch.timbre=timbre;
+        updateOscillator();
+    }
+
+    //Set oscillator parameter "morph". Affects all oscillators.
+    inline void setOscillatorMorph(float morph)
+    {
+        currentPatch.morph=morph;
+        updateOscillator();
     }
 
 private:
@@ -51,6 +104,9 @@ private:
     AudioMixer4_F32 amp[NVOICES];
     AudioFilterMoog_F32 flt[NVOICES];
     AudioMixer8_F32 mix;
+    AudioEffectEnsemble_F32 chorus;
+    AudioMixer4_F32 masterL;
+    AudioMixer4_F32 masterR;
     AudioConvert_F32toI16 float2Int1, float2Int2;
     AudioOutputI2S i2s1;
 
@@ -58,10 +114,11 @@ private:
     AudioConnection_F32 *patchOscAmp[NVOICES * 2];
     AudioConnection_F32 *patchAmpFlt[NVOICES];
     AudioConnection_F32 *patchFltMix[NVOICES];
-    AudioConnection_F32 *patchMixMasterL;
-    AudioConnection_F32 *patchMixMasterR;
-    AudioConnection *patchMasterL;
-    AudioConnection *patchMasterR;
+    AudioConnection_F32 *patchMixChorus;
+    AudioConnection_F32 *patchMixMaster[2];
+    AudioConnection_F32 *patchChorusMaster[2];
+    AudioConnection_F32 *patchMasterConverter[2];
+    AudioConnection *patchConverterI2s[2];
 
     //Structure for storing envelope parameters
     struct Envelope
@@ -75,8 +132,8 @@ private:
     //Structure for storing presets and current instrument settings
     struct Patch
     {
-        float engine = 0.0f; // Plaits synth engine number
-        float color = 0.0f;
+        int engine = 0; // Plaits synth engine number
+        float harmonics = 0.0f;
         float timbre = 0.0f;
         float morph = 0.0f;
         float balance = 0.5f; // Balance between main/aux outputs of the oscillator
@@ -125,6 +182,8 @@ private:
     float portamentoPos;
     bool sustainPressed;
 
+    const float filterMaxFreq = AUDIO_SAMPLE_RATE_EXACT / 2.5;
+
     inline void initOscillators();
     void notesAdd(int8_t *notes, uint8_t note);
     int8_t notesDel(int8_t *notes, uint8_t note);
@@ -135,7 +194,8 @@ private:
     inline void allOff();
     Oscillator *OnNoteOffReal(uint8_t channel, uint8_t note, uint8_t velocity, bool ignoreSustain);
     void updateFilter();
-   
+    void updateOscillator();
+    void updateEngine();
 };
 
 #endif

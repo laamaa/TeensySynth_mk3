@@ -24,6 +24,7 @@ public:
     {
         BufferAllocator allocator(shared_buffer, 16384);
         voice.Init(&allocator);
+        patch.engine = 0;
         patch.note = 48.0f;
         modulations.note = 0.0f;
         modulations.engine = 0.0f;
@@ -35,7 +36,7 @@ public:
         modulations.trigger = 0.0f;
         modulations.frequency_patched = false;
         modulations.timbre_patched = false;
-        modulations.morph_patched = false;
+        modulations.morph_patched = true;
         modulations.trigger_patched = true;
         modulations.level_patched = false;
     }
@@ -67,7 +68,7 @@ public:
         switch (parameter)
         {
         case engine:
-            patch.engine = (int)value;
+            patch.engine = value;
             break;
         case note:
             patch.note = value;

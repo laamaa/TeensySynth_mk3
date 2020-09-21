@@ -1,7 +1,7 @@
 #include "hardware_controls.h"
 #include "settings.h"
 
-void HardwareControls::checkControlValues(uint8_t update)
+void HardwareControls::checkControlValues(bool update)
 {
     //Potentiometers: all are connected to a single multiplexer so we just read them in a for loop
     for (int i = 0; i < 16; i++)
@@ -32,23 +32,47 @@ void HardwareControls::updateTeensySynth(uint8_t ctl, int value)
 {
     switch (ctl)
     {
+    case CTL_LFO_RATE:
+        ts->setSynthEngine((value / 1023) *10);
+    case CTL_HARMONICS:
+        ts->setOscillatorHarmonics((float)value / 1023.0f);
+        break;
+    case CTL_MORPH:
+        ts->setOscillatorMorph((float)value / 1023.0f);
+        break;
+    case CTL_TIMBRE:
+        ts->setOscillatorTimbre((float)value / 1023.0f);
+        break;
     case CTL_FLT_CUTOFF:
-        ts->setFilterCutoff(30 + 12 * powf((value / 101.53), 3));
+    {
+        float new_cutoff = 30 + 12 * powf((value / 101.53), 3);
+        if (ts->getFilterResonance() > 3.07 && new_cutoff > 10000)
+            ts->setFilterResonance(3.0f);
+        ts->setFilterCutoff(new_cutoff);
         break;
+    }
     case CTL_FLT_RESO:
-        ts->setFilterResonance(((float)value / 1024.0f) * 4.0f);
+    {
+        float new_reso = ((float)value / 1023.0f) * 4.0f;
+        if (ts->getFilterCutoff() > 10000 && new_reso > 3.0)
+            new_reso = 3.0f;
+        ts->setFilterResonance(new_reso);
         break;
+    }
     default:
         break;
     }
 }
 
-void HardwareControls::initPins()
+void HardwareControls::init()
 {
+    //Set 16ch multiplexer control pins to mode OUTPUT
     for (uint8_t i = 0; i < 4; i++)
         pinMode(muxControlPin[i], OUTPUT);
-    checkControlValues(0);
-    
+
+    //Read current hardware control values to memory, but do not update synth parameters
+    checkControlValues(false);
+
     //Initialize potentiometer threshold array
     for (uint8_t i = 0; i < LAST_CTL; i++)
         potThreshold[i] = POT_THRESHOLD;

@@ -20,11 +20,11 @@
  * THE SOFTWARE.
  */
 
-#ifndef effect_ensemble_h_
-#define effect_ensemble_h_
+#ifndef effect_ensemble_f32_h_
+#define effect_ensemble_f32_h_
 
 #include <Arduino.h>
-#include "AudioStream.h"
+#include "AudioStream_F32.h"
 #define ENSEMBLE_BUFFER_SIZE 1024
 // to put a channel 90 degrees out of LFO phase for stereo spread
 #define PHASE_90 367
@@ -35,19 +35,19 @@
 #define LFO_SAMPLES 1470
 #define LFO_RANGE 100
 
-class AudioEffectEnsemble : public AudioStream
+class AudioEffectEnsemble_F32 : public AudioStream_F32
 {
 public:
-    AudioEffectEnsemble(void);
+    AudioEffectEnsemble_F32(void);
 	virtual void update(void);
 	
 private:
-	audio_block_t *inputQueueArray[1];
+	audio_block_f32_t *inputQueueArray_f32[1];
     // buffers
-    int16_t delayBuffer[ENSEMBLE_BUFFER_SIZE];
+    float delayBuffer[ENSEMBLE_BUFFER_SIZE];
     
     // LFO wavetable until I resolve progmem issues
-    int16_t lfoTable[LFO_SAMPLES];
+    float lfoTable[LFO_SAMPLES];
     
     // input index
     int16_t inIndex;

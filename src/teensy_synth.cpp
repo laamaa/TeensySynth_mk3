@@ -10,16 +10,23 @@ void TeensySynth::init()
         //Store pointers for oscillator components
         oscs[i] = Oscillator({&waveform[i], &amp[i], &flt[i], -1, 0});
 
-        //Create audio signal path
+        //Create audio signal path for voice components
         patchOscAmp[i] = new AudioConnection_F32(waveform[i], 0, amp[i], 0);           //Main output connection
         patchOscAmp[i + NVOICES] = new AudioConnection_F32(waveform[i], 1, amp[i], 1); //Aux output connection
         patchAmpFlt[i] = new AudioConnection_F32(amp[i], 0, flt[i], 0);
         patchFltMix[i] = new AudioConnection_F32(flt[i], 0, mix, i);
     }
-    patchMixMasterL = new AudioConnection_F32(mix, float2Int1);
-    patchMixMasterR = new AudioConnection_F32(mix, float2Int2);
-    patchMasterL = new AudioConnection(float2Int1, 0, i2s1, 0);
-    patchMasterR = new AudioConnection(float2Int2, 0, i2s1, 1);
+
+    //Create audio signal path for master & fx
+    patchMixChorus = new AudioConnection_F32(mix, chorus);
+    patchMixMaster[0] = new AudioConnection_F32(mix, 0, masterL, 0);
+    patchMixMaster[1] = new AudioConnection_F32(mix, 0, masterR, 0);
+    patchChorusMaster[0] = new AudioConnection_F32(chorus, 0, masterL, 1);
+    patchChorusMaster[1] = new AudioConnection_F32(chorus, 1, masterR, 1);
+    patchMasterConverter[0] = new AudioConnection_F32(masterL, float2Int1);
+    patchMasterConverter[1] = new AudioConnection_F32(masterR, float2Int2);
+    patchConverterI2s[0] = new AudioConnection(float2Int1, 0, i2s1, 0);
+    patchConverterI2s[1] = new AudioConnection(float2Int2, 0, i2s1, 1);
 
     //Initialize default values for signal path components
     {
@@ -293,4 +300,24 @@ void TeensySynth::updateFilter()
         o->flt->resonance(currentPatch.filterResonance);
         o->flt->drive(currentPatch.filterDrive);
     } while (++o < end);
+}
+
+void TeensySynth::updateOscillator()
+{
+    Oscillator *o = oscs, *end = oscs + NVOICES;
+    do
+    {
+        o->wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::harmonics, currentPatch.harmonics);
+        o->wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::timbre, currentPatch.timbre);
+        o->wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::morph, currentPatch.morph);
+    } while (++o < end);
+}
+
+void TeensySynth::updateEngine()
+{
+    Oscillator *o = oscs, *end = oscs + NVOICES;
+    do
+    {
+        o->wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::engine, currentPatch.engine);
+    } while (++o < end);    
 }

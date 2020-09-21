@@ -3,11 +3,11 @@
 #
 # Board              Teensy 4.0
 # USB Type           MIDI
-# CPU Speed          600 MHz
+# CPU Speed          720 MHz (overclock)
 # Optimize           Faster
 # Keyboard Layout    Finnish
 #
-# 14/09/2020 8.32
+# 21/09/2020 21.51
 #******************************************************************************
 SHELL            := cmd.exe
 export SHELL
@@ -41,7 +41,7 @@ FLAGS_LD    := -Wl,--print-memory-usage,--gc-sections,--relax,--defsym=__rtc_loc
 LIBS        := -larm_cortexM7lfsp_math -lm -lstdc++
 
 DEFINES     := -D__IMXRT1062__ -DTEENSYDUINO=153 -DARDUINO_TEENSY40 -DARDUINO=10807
-DEFINES     += -DF_CPU=600000000 -DUSB_MIDI -DLAYOUT_FINNISH
+DEFINES     += -DF_CPU=720000000 -DUSB_MIDI -DLAYOUT_FINNISH
 
 CPP_FLAGS   := $(FLAGS_CPU) $(FLAGS_OPT) $(FLAGS_COM) $(DEFINES) $(FLAGS_CPP)
 C_FLAGS     := $(FLAGS_CPU) $(FLAGS_OPT) $(FLAGS_COM) $(DEFINES) $(FLAGS_C)

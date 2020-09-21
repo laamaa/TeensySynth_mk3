@@ -17,6 +17,6 @@
 #define OSC_LEVEL 0.8f
 
 // Initial potentiometer update threshold value, to prevent noise from triggering parameter updates
-#define POT_THRESHOLD 2
+#define POT_THRESHOLD 5
 
 #endif

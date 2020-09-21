@@ -20,11 +20,11 @@
 // which then modulates three delay lines 120 degrees apart in the LFO waveform.
 
 #include <Arduino.h>
-#include "effect_ensemble.h"
+#include "effect_ensemble_f32.h"
 #include "utility/dspinst.h"
 #include "arm_math.h"
 
-AudioEffectEnsemble::AudioEffectEnsemble() : AudioStream(1, inputQueueArray)
+AudioEffectEnsemble_F32::AudioEffectEnsemble_F32() : AudioStream_F32(1, inputQueueArray_f32)
 {
 	memset(delayBuffer, 0, sizeof(delayBuffer));
     memset(lfoTable, 0, sizeof(lfoTable));
@@ -65,50 +65,50 @@ AudioEffectEnsemble::AudioEffectEnsemble() : AudioStream(1, inputQueueArray)
     
 }
 
-// TODO: move this to one of the data files, use in output_adat.cpp, output_tdm.cpp, etc
-static const audio_block_t zeroblock = {
-    0, 0, 0, {
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+/* // TODO: move this to one of the data files, use in output_adat.cpp, output_tdm.cpp, etc
+static const audio_block_f32_t zeroblock = {
+    0.0f, 0.0f, 0.0f, {
+        0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
 #if AUDIO_BLOCK_SAMPLES > 16
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
 #endif
 #if AUDIO_BLOCK_SAMPLES > 32
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
 #endif
 #if AUDIO_BLOCK_SAMPLES > 48
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
 #endif
 #if AUDIO_BLOCK_SAMPLES > 64
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
 #endif
 #if AUDIO_BLOCK_SAMPLES > 80
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
 #endif
 #if AUDIO_BLOCK_SAMPLES > 96
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
 #endif
 #if AUDIO_BLOCK_SAMPLES > 112
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
 #endif
-    } };
+    } }; */
 
-void AudioEffectEnsemble::update(void)
+void AudioEffectEnsemble_F32::update(void)
 {
-	const audio_block_t *block;
-    audio_block_t *outblock;
-    audio_block_t *outblockB;
+	const audio_block_f32_t *block;
+    audio_block_f32_t *outblock;
+    audio_block_f32_t *outblockB;
 	uint16_t i;
 
-    outblock = allocate();
-    outblockB = allocate();
+    outblock = allocate_f32();
+    outblockB = allocate_f32();
     if ((!outblock) || (!outblockB)) {
-        audio_block_t *tmp = receiveReadOnly(0);
+        audio_block_f32_t *tmp = receiveReadOnly_f32(0);
         if (tmp) release(tmp);
         return;
     }
-	block = receiveReadOnly(0);
+	block = receiveReadOnly_f32(0);
     if (!block)
-        block = &zeroblock;
+        return;
 
     // buffer the incoming block
     for (i=0; i < AUDIO_BLOCK_SAMPLES; i++)
@@ -206,8 +206,8 @@ void AudioEffectEnsemble::update(void)
 
         // combine delayed samples into output
         // add the delayed and scaled samples
-        outblock->data[i] = int(round((delayBuffer[offsetIndex1] + delayBuffer[offsetIndex2] + delayBuffer[offsetIndex3]) / 3.0));
-        outblockB->data[i] = int(round((delayBuffer[offsetIndex1B] + delayBuffer[offsetIndex2B] + delayBuffer[offsetIndex3B]) / 3.0));
+        outblock->data[i] = (delayBuffer[offsetIndex1] + delayBuffer[offsetIndex2] + delayBuffer[offsetIndex3]) / 3.0;
+        outblockB->data[i] = (delayBuffer[offsetIndex1B] + delayBuffer[offsetIndex2B] + delayBuffer[offsetIndex3B]) / 3.0;
 
     }
 
@@ -215,7 +215,7 @@ void AudioEffectEnsemble::update(void)
     transmit(outblockB, 1);
     release(outblock);
     release(outblockB);
-    if (block != &zeroblock) release((audio_block_t *)block);
+    release((audio_block_f32_t *)block);
 
     
     return;

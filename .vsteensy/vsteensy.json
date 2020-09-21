@@ -18,6 +18,7 @@
       "projectLibraries": [
         "Audio",
         "Encoder",
+        "OpenAudio_ArduinoLibrary",
         "SD",
         "SerialFlash",
         "SPI",
@@ -27,7 +28,7 @@
         "name": "Teensy 4.0",
         "options": {
           "USB Type": "MIDI",
-          "CPU Speed": "600 MHz",
+          "CPU Speed": "720 MHz (overclock)",
           "Optimize": "Faster",
           "Keyboard Layout": "Finnish"
         }

@@ -9,7 +9,7 @@ class HardwareControls
 public:
     HardwareControls(TeensySynth *tsPointer)
     {
-        initPins();
+        init();
         ts = tsPointer;
     }
 
@@ -31,7 +31,7 @@ private:
     //HW control layout enum: potentiometers first (left to right, top to bottom), encoders second and switches last
     enum HwControl
     {
-        CTL_COLOR,
+        CTL_HARMONICS,
         CTL_TIMBRE,
         CTL_MORPH,
         CTL_BALANCE,
@@ -95,9 +95,9 @@ private:
 
     void updateTeensySynth(uint8_t ctl, int value);
 
-    void checkControlValues(uint8_t update);
+    void checkControlValues(bool update);
 
-    void initPins();
+    void init();
 };
 
 #endif
