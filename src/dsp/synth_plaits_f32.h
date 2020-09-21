@@ -2,7 +2,6 @@
 #define SYNTH_PLAITS_F32_H_
 
 #include "core_pins.h"
-#include "AudioStream.h"
 #include "AudioStream_F32.h"
 #include "plaits/dsp/dsp.h"
 #include "plaits/dsp/voice.h"

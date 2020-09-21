@@ -4,30 +4,60 @@
 #include <stdint.h>
 #include "settings.h"
 #include "dsp/synth_plaits_f32.h"
+#include "dsp/filter_moog_f32.h"
 #include <OpenAudio_ArduinoLibrary.h>
 
 class TeensySynth
 {
 public:
     void init();
+
+    //Trigger a new voice
     void OnNoteOn(uint8_t channel, uint8_t note, uint8_t velocity);
+
+    //Kill an existing voice
     inline void OnNoteOff(uint8_t channel, uint8_t note, uint8_t velocity)
     {
         OnNoteOffReal(channel, note, velocity, false);
     }
+
+    //MIDI control change message handler
     void OnControlChange(uint8_t channel, uint8_t control, uint8_t value);
+
+    //Set lowpass filter cutoff frequency in Hz. Affects all oscillators.
+    inline void setFilterCutoff(float cutoff)
+    {
+        currentPatch.filterCutoff = cutoff;
+        updateFilter();
+    }
+
+    //Set lowpass filter resonance (Q value). Affects all oscillators.
+    inline void setFilterResonance(float resonance)
+    {
+        currentPatch.filterResonance = resonance;
+        updateFilter();
+    }
+
+    //Set lowpass filter overdrive amount. Affects all oscillators.
+    inline void setFilterDrive(float resonance)
+    {
+        currentPatch.filterResonance = resonance;
+        updateFilter();
+    }
 
 private:
     //Audio signal path components
     AudioSynthPlaits_F32 waveform[NVOICES];
     AudioMixer4_F32 amp[NVOICES];
+    AudioFilterMoog_F32 flt[NVOICES];
     AudioMixer8_F32 mix;
     AudioConvert_F32toI16 float2Int1, float2Int2;
     AudioOutputI2S i2s1;
 
     //Pointers for audio signal path connections
     AudioConnection_F32 *patchOscAmp[NVOICES * 2];
-    AudioConnection_F32 *patchAmpMix[NVOICES];
+    AudioConnection_F32 *patchAmpFlt[NVOICES];
+    AudioConnection_F32 *patchFltMix[NVOICES];
     AudioConnection_F32 *patchMixMasterL;
     AudioConnection_F32 *patchMixMasterR;
     AudioConnection *patchMasterL;
@@ -55,6 +85,9 @@ private:
         float filterEnvelopeDepth = 0.0f;
         float filterLfoDepth = 0.0f;
         float filterLfoRate = 0.0f;
+        float filterCutoff = AUDIO_SAMPLE_RATE_EXACT / 2.5;
+        float filterResonance = 1.0f;
+        float filterDrive = 1.0f;
         bool portamentoOn = false;
         uint16_t portamentoTime = 200;
         bool velocityOn = false; //velocity enabled
@@ -65,6 +98,7 @@ private:
     {
         AudioSynthPlaits_F32 *wf;
         AudioMixer4_F32 *amp;
+        AudioFilterMoog_F32 *flt;
         int8_t note;
         uint8_t velocity;
     };
@@ -77,15 +111,13 @@ private:
     bool omniOn = false;
 
     //Pointers to components in audio signal path that we like to edit in batch operations
-    Oscillator oscs[NVOICES] = {
-        {&waveform[0], &amp[0], -1, 0},
-        {&waveform[1], &amp[1], -1, 0},
-        {&waveform[2], &amp[2], -1, 0},
-        {&waveform[3], &amp[3], -1, 0},
-    };
+    Oscillator oscs[NVOICES];
 
+    //Current synth voice settings
     Patch currentPatch;
-    Patch preset[PRESETS]; // Allocate memory for storing presets
+
+    // Allocate memory for storing presets
+    Patch preset[PRESETS];
 
     //Variables related to momentary information
     int8_t portamentoDir;
@@ -94,7 +126,6 @@ private:
     bool sustainPressed;
 
     inline void initOscillators();
-
     void notesAdd(int8_t *notes, uint8_t note);
     int8_t notesDel(int8_t *notes, uint8_t note);
     bool notesFind(int8_t *notes, uint8_t note);
@@ -103,6 +134,8 @@ private:
     inline void oscOff(Oscillator &osc);
     inline void allOff();
     Oscillator *OnNoteOffReal(uint8_t channel, uint8_t note, uint8_t velocity, bool ignoreSustain);
+    void updateFilter();
+   
 };
 
 #endif

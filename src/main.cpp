@@ -1,8 +1,10 @@
 //************LIBRARIES USED**************
 #include "settings.h"
 #include "teensy_synth.h"
+#include "hardware_controls.h"
 
 TeensySynth ts;
+HardwareControls *hw;
 
 IntervalTimer myTimer;
 
@@ -72,10 +74,10 @@ void readMidi()
             ts.OnNoteOn(usbMIDI.getChannel(), usbMIDI.getData1(), usbMIDI.getData2());
             break;
         case usbMIDI.NoteOff:
-            ts.OnNoteOff(usbMIDI.getChannel(),usbMIDI.getData1(), usbMIDI.getData2());
+            ts.OnNoteOff(usbMIDI.getChannel(), usbMIDI.getData1(), usbMIDI.getData2());
             break;
         case usbMIDI.ControlChange:
-            ts.OnControlChange(usbMIDI.getChannel(),usbMIDI.getData1(), usbMIDI.getData2());
+            ts.OnControlChange(usbMIDI.getChannel(), usbMIDI.getData1(), usbMIDI.getData2());
             break;
         default:
             break;
@@ -92,16 +94,20 @@ void setup()
 #endif
     //Allocate audio memory. Floating point and integer versions need their own blocks.
     AudioMemory(2);
-    AudioMemory_F32(20);
+    AudioMemory_F32(25);
 
     //Initialize the synth only after Serial is ok and audiomemory is allocated
-    ts.init(); 
+    ts.init();
+
+    //Initialize hardware controls and pass a pointer to the main synth stuff
+    hw = new HardwareControls(&ts);
 }
 
 //************LOOP**************
 void loop()
 {
     readMidi();
+    hw->update();
 
 #if SYNTH_DEBUG > 0
     performanceCheck();

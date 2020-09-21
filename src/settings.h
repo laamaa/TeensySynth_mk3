@@ -16,4 +16,7 @@
 // Oscillator signal attenuation, happens right after the oscillator. Range = 0.0f-1.0f.
 #define OSC_LEVEL 0.8f
 
+// Initial potentiometer update threshold value, to prevent noise from triggering parameter updates
+#define POT_THRESHOLD 2
+
 #endif
