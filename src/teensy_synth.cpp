@@ -8,14 +8,23 @@ void TeensySynth::init()
     for (int i = 0; i < NVOICES; i++)
     {
         //Store pointers for oscillator components
-        oscs[i] = Oscillator({&waveform[i], &amp[i], &flt[i], -1, 0});
+        oscs[i] = Oscillator({&waveform[i], &amp[i], -1, 0});
 
         //Create audio signal path for voice components
         patchOscAmp[i] = new AudioConnection_F32(waveform[i], 0, amp[i], 0);           //Main output connection
         patchOscAmp[i + NVOICES] = new AudioConnection_F32(waveform[i], 1, amp[i], 1); //Aux output connection
-        patchAmpFlt[i] = new AudioConnection_F32(amp[i], 0, flt[i], 0);
-        patchFltMix[i] = new AudioConnection_F32(flt[i], 0, mix, i);
+        patchAmpMix[i] = new AudioConnection_F32(amp[i], 0, mix, i);
     }
+
+    /*     //Pointers for audio signal path connections
+    AudioConnection_F32 *patchOscAmp[NVOICES * 2];
+    AudioConnection_F32 *patchAmpMix[NVOICES];
+    AudioConnection_F32 *patchMixChorus;
+    AudioConnection_F32 *patchMixMaster[2];
+    AudioConnection_F32 *patchChorusMaster[2];
+    AudioConnection_F32 *patchMasterFlt[2];
+    AudioConnection_F32 *patchFltConverter[2];
+    AudioConnection *patchConverterI2s[2]; */
 
     //Create audio signal path for master & fx
     patchMixChorus = new AudioConnection_F32(mix, chorus);
@@ -23,8 +32,10 @@ void TeensySynth::init()
     patchMixMaster[1] = new AudioConnection_F32(mix, 0, masterR, 0);
     patchChorusMaster[0] = new AudioConnection_F32(chorus, 0, masterL, 1);
     patchChorusMaster[1] = new AudioConnection_F32(chorus, 1, masterR, 1);
-    patchMasterConverter[0] = new AudioConnection_F32(masterL, float2Int1);
-    patchMasterConverter[1] = new AudioConnection_F32(masterR, float2Int2);
+    patchMasterFlt[0] = new AudioConnection_F32(masterL, flt[0]);
+    patchMasterFlt[1] = new AudioConnection_F32(masterR, flt[1]);
+    patchFltConverter[0] = new AudioConnection_F32(flt[0], float2Int1);
+    patchFltConverter[1] = new AudioConnection_F32(flt[1], float2Int2);
     patchConverterI2s[0] = new AudioConnection(float2Int1, 0, i2s1, 0);
     patchConverterI2s[1] = new AudioConnection(float2Int2, 0, i2s1, 1);
 
@@ -33,13 +44,19 @@ void TeensySynth::init()
         Oscillator *o = oscs, *end = oscs + NVOICES;
         do
         {
-            o->amp->gain(0, 0.8f);
+            o->amp->gain(0, OSC_LEVEL);
             o->amp->gain(1, 0.0f);
-            o->flt->frequency(AUDIO_SAMPLE_RATE_EXACT / 2.5);
-            o->flt->resonance(1.0f);
-            o->flt->drive(1.0f);
         } while (++o < end);
     }
+
+    masterL.gain(0, 0.8f);
+    masterL.gain(1, 0.8f);
+    masterR.gain(0, 0.8f);
+    masterR.gain(1, 0.8f);
+
+    updateOscillator();
+    updateOscillatorBalance();
+    updateFilter();
 }
 
 //Handles MIDI note on events
@@ -245,10 +262,10 @@ void TeensySynth::oscOn(Oscillator &osc, int8_t note, uint8_t velocity)
     {
         osc.wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::note, note);
         osc.wf->setModulationsParameter(AudioSynthPlaits_F32::Parameters::trigger, 1.0f);
+        osc.wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::decay, currentPatch.decay);
         notesAdd(notesOn, note);
         if (!osc.velocity)
         {
-            // osc.env->noteOn();
             // osc.flt_env->noteOn();
         }
         // osc.amp->gain(GAIN_OSC * v);
@@ -257,15 +274,16 @@ void TeensySynth::oscOn(Oscillator &osc, int8_t note, uint8_t velocity)
     }
 }
 
-inline void TeensySynth::oscOff(Oscillator &osc)
+void TeensySynth::oscOff(Oscillator &osc)
 {
     notesDel(notesOn, osc.note);
     osc.note = -1;
     osc.velocity = 0;
     osc.wf->setModulationsParameter(AudioSynthPlaits_F32::Parameters::trigger, 0.0f);
+    osc.wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::decay, 0.0f);
 }
 
-inline void TeensySynth::allOff()
+void TeensySynth::allOff()
 {
     Oscillator *o = oscs, *end = oscs + NVOICES;
     do
@@ -293,13 +311,12 @@ void TeensySynth::OnControlChange(uint8_t channel, uint8_t control, uint8_t valu
 
 void TeensySynth::updateFilter()
 {
-    Oscillator *o = oscs, *end = oscs + NVOICES;
-    do
+    for (int i = 0; i < 2; i++)
     {
-        o->flt->frequency(currentPatch.filterCutoff);
-        o->flt->resonance(currentPatch.filterResonance);
-        o->flt->drive(currentPatch.filterDrive);
-    } while (++o < end);
+        flt[i].frequency(currentPatch.filterCutoff);
+        flt[i].resonance(currentPatch.filterResonance);
+        flt[i].drive(currentPatch.filterDrive);
+    }
 }
 
 void TeensySynth::updateOscillator()
@@ -313,11 +330,31 @@ void TeensySynth::updateOscillator()
     } while (++o < end);
 }
 
+void TeensySynth::updateDecay()
+{
+    Oscillator *o = oscs, *end = oscs + NVOICES;
+    do
+    {
+        if (o->note != -1)
+            o->wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::decay, currentPatch.decay);
+    } while (++o < end);
+}
+
 void TeensySynth::updateEngine()
 {
     Oscillator *o = oscs, *end = oscs + NVOICES;
     do
     {
         o->wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::engine, currentPatch.engine);
-    } while (++o < end);    
+    } while (++o < end);
+}
+
+void TeensySynth::updateOscillatorBalance()
+{
+    Oscillator *o = oscs, *end = oscs + NVOICES;
+    do
+    {
+        o->amp->gain(0, OSC_LEVEL - currentPatch.balance);
+        o->amp->gain(1, currentPatch.balance);
+    } while (++o < end);
 }

@@ -90,7 +90,7 @@ class ChannelPostProcessor {
     if (gain < 0.0f) {
       limiter_.Process(-gain, in, size);
     }
-    const float post_gain = (gain < 0.0f ? 1.0f : gain) * -0.8f;
+    const float post_gain = (gain < 0.0f ? 1.0f : gain) * -0.6f;
     if (!bypass_lpg) {
       lpg_.Process(
           post_gain * low_pass_gate_gain,

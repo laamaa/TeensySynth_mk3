@@ -44,11 +44,12 @@ static const float kSampleRate = 48000.0f;
 //
 // That's only 4.6 cts of error, but we care!
 
-static const float kCorrectedSampleRate = 47872.34f;
+//static const float kCorrectedSampleRate = 47872.34f;
+static const float kCorrectedSampleRate = 48000.0f;
 const float a0 = (440.0f / 8.0f) / kCorrectedSampleRate;
 
-const size_t kMaxBlockSize = 24;
-const size_t kBlockSize = 12;
+const size_t kMaxBlockSize = 128;
+const size_t kBlockSize = 128;
 
 }  // namespace plaits
 

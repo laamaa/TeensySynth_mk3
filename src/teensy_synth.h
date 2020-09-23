@@ -25,22 +25,17 @@ public:
     //MIDI control change message handler
     void OnControlChange(uint8_t channel, uint8_t control, uint8_t value);
 
-    inline void setSynthEngine(float engine)
+    inline void setSynthEngine(int engine)
     {
-        if (engine < 0.0f)
-            engine = 0.0f;
-        if (engine > 1.0f)
-            engine = 1.0f;
+        CONSTRAIN(engine,0,16);
+        currentPatch.engine = engine;
         updateEngine();
     }
 
     //Set lowpass filter cutoff frequency in Hz. Affects all oscillators. Range: 20.0f - 19200.0f (on 48kHz sample rate)
     inline void setFilterCutoff(float cutoff)
     {
-        if (cutoff < 20.0f)
-            cutoff = 20.0f;
-        if (cutoff > filterMaxFreq)
-            cutoff = filterMaxFreq;
+        CONSTRAIN(cutoff,20.0f,filterMaxFreq);
         currentPatch.filterCutoff = cutoff;
         updateFilter();
     }
@@ -53,10 +48,7 @@ public:
     //Set lowpass filter resonance (Q value). Affects all oscillators. Range: 0.7f - 5.0f
     inline void setFilterResonance(float resonance)
     {
-        if (resonance < 0.1f)
-            resonance = 0.1f;
-        if (resonance > 10.0f)
-            resonance = 10.0f;         
+        CONSTRAIN(resonance,0.1f,10.0f);         
         currentPatch.filterResonance = resonance;
         updateFilter();
     }
@@ -69,10 +61,7 @@ public:
     //Set lowpass filter overdrive amount. Affects all oscillators. Range: 0.1f - 10.0f
     inline void setFilterDrive(float drive)
     {
-        if (drive < 0.1f)
-            drive = 0.1f;
-        if (drive > 10.0f)
-            drive = 10.0f;            
+        CONSTRAIN(drive,0.1f,10.0f);           
         currentPatch.filterDrive = drive;
         updateFilter();
     }
@@ -98,26 +87,41 @@ public:
         updateOscillator();
     }
 
+    inline void setOscillatorBalance(float balance)
+    {
+        CONSTRAIN(balance, 0.0f, 1.0f);
+        balance = balance * OSC_LEVEL;
+        currentPatch.balance=balance;
+        updateOscillatorBalance();
+    }
+
+    inline void setOscillatorDecay(float decay)
+    {
+        CONSTRAIN(decay, 0.0f, 1.0f);
+        currentPatch.decay=decay;
+        updateOscillator();
+    }
+
 private:
     //Audio signal path components
     AudioSynthPlaits_F32 waveform[NVOICES];
     AudioMixer4_F32 amp[NVOICES];
-    AudioFilterMoog_F32 flt[NVOICES];
-    AudioMixer8_F32 mix;
+    AudioMixer8_F32 mix;    
     AudioEffectEnsemble_F32 chorus;
     AudioMixer4_F32 masterL;
     AudioMixer4_F32 masterR;
+    AudioFilterMoog_F32 flt[2];    
     AudioConvert_F32toI16 float2Int1, float2Int2;
     AudioOutputI2S i2s1;
 
     //Pointers for audio signal path connections
     AudioConnection_F32 *patchOscAmp[NVOICES * 2];
-    AudioConnection_F32 *patchAmpFlt[NVOICES];
-    AudioConnection_F32 *patchFltMix[NVOICES];
+    AudioConnection_F32 *patchAmpMix[NVOICES];
     AudioConnection_F32 *patchMixChorus;
     AudioConnection_F32 *patchMixMaster[2];
     AudioConnection_F32 *patchChorusMaster[2];
-    AudioConnection_F32 *patchMasterConverter[2];
+    AudioConnection_F32 *patchMasterFlt[2];
+    AudioConnection_F32 *patchFltConverter[2];
     AudioConnection *patchConverterI2s[2];
 
     //Structure for storing envelope parameters
@@ -136,7 +140,8 @@ private:
         float harmonics = 0.0f;
         float timbre = 0.0f;
         float morph = 0.0f;
-        float balance = 0.5f; // Balance between main/aux outputs of the oscillator
+        float balance = 0.0f; // Balance between main/aux outputs of the oscillator. 0.0f = main only, 1.0f = aux only
+        float decay = 1.0f;
         Envelope ampEnvelope = {0.0f, 0.0f, 0.0f, 0.0f};
         Envelope filterEnvelope = {0.0f, 0.0f, 0.0f, 0.0f};
         float filterEnvelopeDepth = 0.0f;
@@ -155,7 +160,6 @@ private:
     {
         AudioSynthPlaits_F32 *wf;
         AudioMixer4_F32 *amp;
-        AudioFilterMoog_F32 *flt;
         int8_t note;
         uint8_t velocity;
     };
@@ -190,12 +194,14 @@ private:
     bool notesFind(int8_t *notes, uint8_t note);
     inline void notesReset(int8_t *notes);
     void oscOn(Oscillator &osc, int8_t note, uint8_t velocity);
-    inline void oscOff(Oscillator &osc);
-    inline void allOff();
+    void oscOff(Oscillator &osc);
+    void allOff();
     Oscillator *OnNoteOffReal(uint8_t channel, uint8_t note, uint8_t velocity, bool ignoreSustain);
     void updateFilter();
     void updateOscillator();
     void updateEngine();
+    void updateOscillatorBalance();
+    void updateDecay();
 };
 
 #endif

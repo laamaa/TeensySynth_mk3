@@ -32,7 +32,7 @@ public:
         modulations.note = 0.0f;
         modulations.harmonics = 0.0f;
         modulations.morph = 0.0;
-        modulations.level = 1.0f;
+        modulations.level = 0.0f;
         modulations.trigger = 0.0f;
         modulations.frequency_patched = false;
         modulations.timbre_patched = false;

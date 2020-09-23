@@ -32,8 +32,16 @@ void HardwareControls::updateTeensySynth(uint8_t ctl, int value)
 {
     switch (ctl)
     {
-    case CTL_LFO_RATE:
-        ts->setSynthEngine((value / 1023) *10);
+    case CTL_DECAY:
+        ts->setOscillatorDecay((float)value / 1023.0f);
+        break;
+    case CTL_FLT_ATK:
+    {
+        uint8_t engine = round(((float)value/1023.0f)*16);
+        Serial.println(engine);
+        ts->setSynthEngine(engine);
+        break;
+    }
     case CTL_HARMONICS:
         ts->setOscillatorHarmonics((float)value / 1023.0f);
         break;
@@ -43,9 +51,14 @@ void HardwareControls::updateTeensySynth(uint8_t ctl, int value)
     case CTL_TIMBRE:
         ts->setOscillatorTimbre((float)value / 1023.0f);
         break;
+    case CTL_BALANCE:
+        ts->setOscillatorBalance((float)value / 1023.0f);
+        break;
     case CTL_FLT_CUTOFF:
     {
         float new_cutoff = 30 + 12 * powf((value / 101.53), 3);
+
+        // The filter has a pretty nasty self-oscillation in higher frequencies when the Q is large enough, trying to prevent this..
         if (ts->getFilterResonance() > 3.07 && new_cutoff > 10000)
             ts->setFilterResonance(3.0f);
         ts->setFilterCutoff(new_cutoff);

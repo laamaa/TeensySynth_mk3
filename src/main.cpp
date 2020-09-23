@@ -66,7 +66,7 @@ void selectCommand(char c)
 
 void readMidi()
 {
-    if (usbMIDI.read())
+    while (usbMIDI.read(SYNTH_MIDICHANNEL))
     {
         switch (usbMIDI.getType())
         {
@@ -94,7 +94,7 @@ void setup()
 #endif
     //Allocate audio memory. Floating point and integer versions need their own blocks.
     AudioMemory(2);
-    AudioMemory_F32(25);
+    AudioMemory_F32(11);
 
     //Initialize the synth only after Serial is ok and audiomemory is allocated
     ts.init();

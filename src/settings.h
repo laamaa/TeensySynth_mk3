@@ -2,10 +2,10 @@
 #define SETTINGS_H
 
 // Enable debug messages - 0=off, 1=less, 2=more
-#define SYNTH_DEBUG 2
+#define SYNTH_DEBUG 0
 
 // Amount of polyphony
-#define NVOICES 6
+#define NVOICES 5
 
 // Midi channel
 #define SYNTH_MIDICHANNEL 7
@@ -18,5 +18,13 @@
 
 // Initial potentiometer update threshold value, to prevent noise from triggering parameter updates
 #define POT_THRESHOLD 5
+
+//Constrain macro, borrowed from stmlib
+#define CONSTRAIN(var, min, max) \
+  if (var < (min)) { \
+    var = (min); \
+  } else if (var > (max)) { \
+    var = (max); \
+  }
 
 #endif

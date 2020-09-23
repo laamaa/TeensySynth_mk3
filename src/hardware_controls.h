@@ -35,7 +35,7 @@ private:
         CTL_TIMBRE,
         CTL_MORPH,
         CTL_BALANCE,
-        CTL_AMP_ATK,
+        CTL_DECAY,
         CTL_AMP_DEC,
         CTL_AMP_SUS,
         CTL_AMP_REL,
