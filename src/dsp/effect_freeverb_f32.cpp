@@ -69,10 +69,44 @@ AudioEffectFreeverb_F32::AudioEffectFreeverb_F32() : AudioStream_F32(1, inputQue
 	allpass2index = 0;
 	allpass3index = 0;
 	allpass4index = 0;
+	for (uint16_t i=0; i < AUDIO_BLOCK_SAMPLES; i++) zeroblock.data[i] = 0.0f;
 }
 
-// TODO: move this to one of the data files, use in output_adat.cpp, output_tdm.cpp, etc
-//static const audio_block_f32_t zeroblock;
+#if 0
+#define sat16i(n, rshift) signed_saturate_rshift((n), 16, (rshift))
+#else
+// cleaner sat16 by http://www.moseleyinstruments.com/
+static int16_t sat16i(int32_t n, int rshift) {
+    // we should always round towards 0
+    // to avoid recirculating round-off noise
+    //
+    // a 2s complement positive number is always
+    // rounded down, so we only need to take
+    // care of negative numbers
+    if (n < 0) {
+        n = n + (~(0xFFFFFFFFUL << rshift));
+    }
+    n = n >> rshift;
+    if (n > 32767) {
+        return 32767;
+    }
+    if (n < -32768) {
+        return -32768;
+    }
+    return n;
+}
+#endif
+
+static float sat16(float n, int rshift) {
+    // we should always round towards 0
+    // to avoid recirculating round-off noise
+    //
+    // a 2s complement positive number is always
+    // rounded down, so we only need to take
+    // care of negative numbers
+    n = n / (float) (1<<rshift);
+    return n;
+}
 
 void AudioEffectFreeverb_F32::update()
 {
@@ -90,7 +124,7 @@ void AudioEffectFreeverb_F32::update()
 		return;
 	}
 	block = receiveReadOnly_f32(0);
-	if (!block) return;
+	if (!block) block = &zeroblock;
 
 	for (i=0; i < AUDIO_BLOCK_SAMPLES; i++) {
 		// TODO: scale numerical range depending on roomsize & damping
@@ -175,17 +209,17 @@ void AudioEffectFreeverb_F32::update()
 	}
 	transmit(outblock);
 	release(outblock);
-	release((audio_block_f32_t *)block);
+	if (block != &zeroblock) release((audio_block_f32_t *)block);
 
 #elif defined(KINETISL)
-	audio_block_t *block;
-	block = receiveReadOnly(0);
+	audio_block_f32_t *block;
+	block = receiveReadOnly_f32(0);
 	if (block) release(block);
 #endif
 }
 
 
-AudioEffectFreeverbStereo_F32::AudioEffectFreeverbStereo_F32() : AudioStream_F32(1, inputQueueArray_f32)
+AudioEffectFreeverbStereo_F32::AudioEffectFreeverbStereo_F32() : AudioStream_F32(1, inputQueueArray)
 {
 	for(uint16_t i = 0; i < sizeof(comb1bufL)/sizeof(float); i++) comb1bufL[i] = 0.0; 
 	for(uint16_t i = 0; i < sizeof(comb2bufL)/sizeof(float); i++) comb2bufL[i] = 0.0; 
@@ -275,7 +309,7 @@ void AudioEffectFreeverbStereo_F32::update()
 		if (block) release((audio_block_f32_t *)block);
 		return;
 	}
-	if (!block) return;
+	if (!block) block = &zeroblock;
 
 	for (i=0; i < AUDIO_BLOCK_SAMPLES; i++) {
 		// TODO: scale numerical range depending on roomsize & damping
@@ -439,11 +473,11 @@ void AudioEffectFreeverbStereo_F32::update()
 	transmit(outblockR, 1);
 	release(outblockL);
 	release(outblockR);
-	release((audio_block_f32_t *)block);
+	if (block != &zeroblock) release((audio_block_f32_t *)block);
 
 #elif defined(KINETISL)
-	audio_block_t *block;
-	block = receiveReadOnly(0);
+	audio_block_f32_t *block;
+	block = receiveReadOnly_f32(0);
 	if (block) release(block);
 #endif
 }

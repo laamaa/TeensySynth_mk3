@@ -24,8 +24,8 @@
  * THE SOFTWARE.
  */
 
-#ifndef effect_freeverb_f__h_
-#define effect_freeverb_f_h_
+#ifndef effect_freeverb_f32_h_
+#define effect_freeverb_f32_h_
 #include <Arduino.h>
 #include "AudioStream_F32.h"
 
@@ -54,6 +54,7 @@ public:
 	}
 private:
 	audio_block_f32_t *inputQueueArray[1];
+	audio_block_f32_t zeroblock;
 	float comb1buf[1116];
 	float comb2buf[1188];
 	float comb3buf[1277];
@@ -116,7 +117,8 @@ public:
 		__enable_irq();
 	}
 private:
-	audio_block_f32_t *inputQueueArray_f32[1];
+	audio_block_f32_t *inputQueueArray[1];
+	audio_block_f32_t zeroblock;
 	float comb1bufL[1116];
 	float comb2bufL[1188];
 	float comb3bufL[1277];
