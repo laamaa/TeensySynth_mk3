@@ -72,42 +72,6 @@ AudioEffectFreeverb_F32::AudioEffectFreeverb_F32() : AudioStream_F32(1, inputQue
 	for (uint16_t i=0; i < AUDIO_BLOCK_SAMPLES; i++) zeroblock.data[i] = 0.0f;
 }
 
-#if 0
-#define sat16i(n, rshift) signed_saturate_rshift((n), 16, (rshift))
-#else
-// cleaner sat16 by http://www.moseleyinstruments.com/
-static int16_t sat16i(int32_t n, int rshift) {
-    // we should always round towards 0
-    // to avoid recirculating round-off noise
-    //
-    // a 2s complement positive number is always
-    // rounded down, so we only need to take
-    // care of negative numbers
-    if (n < 0) {
-        n = n + (~(0xFFFFFFFFUL << rshift));
-    }
-    n = n >> rshift;
-    if (n > 32767) {
-        return 32767;
-    }
-    if (n < -32768) {
-        return -32768;
-    }
-    return n;
-}
-#endif
-
-static float sat16(float n, int rshift) {
-    // we should always round towards 0
-    // to avoid recirculating round-off noise
-    //
-    // a 2s complement positive number is always
-    // rounded down, so we only need to take
-    // care of negative numbers
-    n = n / (float) (1<<rshift);
-    return n;
-}
-
 void AudioEffectFreeverb_F32::update()
 {
 #if defined(__ARM_ARCH_7EM__)
@@ -180,8 +144,6 @@ void AudioEffectFreeverb_F32::update()
 		comb8buf[comb8index] = input + comb8filter * combfeeback;
 		if (++comb8index >= sizeof(comb8buf)/sizeof(float)) comb8index = 0;
 
-		//output = sat16(sum * 31457.0, 17);
-		//output = sum * 31457.0/131072.0f;
 		output = sum;
 
 		bufout = allpass1buf[allpass1index];
@@ -204,7 +166,6 @@ void AudioEffectFreeverb_F32::update()
 		output = (bufout - output) /2.0;
 		if (++allpass4index >= sizeof(allpass4buf)/sizeof(float)) allpass4index = 0;
 
-		//outblock->data[i] = sat16i(output * 30.0, 0);
 		outblock->data[i] = output;
 	}
 	transmit(outblock);
@@ -365,8 +326,6 @@ void AudioEffectFreeverbStereo_F32::update()
 		comb8bufL[comb8indexL] = input + comb8filterL * combfeeback;
 		if (++comb8indexL >= sizeof(comb8bufL)/sizeof(float)) comb8indexL = 0;
 
-		//outputL = sat16(sum * 31457, 17);
-		//outputL = sum * 31457.0/131072.0f;
 		outputL = sum;
 		sum = 0.0;
 
@@ -418,8 +377,6 @@ void AudioEffectFreeverbStereo_F32::update()
 		comb8bufR[comb8indexR] = input + comb8filterR * combfeeback;
 		if (++comb8indexR >= sizeof(comb8bufR)/sizeof(float)) comb8indexR = 0;
 
-		//outputR = sat16(sum * 31457, 17);
-		//outputR = sum * 31457.0/131072.0f;
 		outputR = sum;
 
 		bufout = allpass1bufL[allpass1indexL];

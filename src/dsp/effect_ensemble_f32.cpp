@@ -19,6 +19,8 @@
 // It takes the approach of 6.0 Hz and 0.6 Hz sinewaves making up an LFO,
 // which then modulates three delay lines 120 degrees apart in the LFO waveform.
 
+// Original by quarterturn, modified to f32 by laamaa
+
 #include <Arduino.h>
 #include "effect_ensemble_f32.h"
 #include "utility/dspinst.h"
@@ -58,39 +60,12 @@ AudioEffectEnsemble_F32::AudioEffectEnsemble_F32() : AudioStream_F32(1, inputQue
     // generate the LFO wavetable
     for (iC = 0; iC < LFO_SAMPLES; iC++)
     {
-        lfoTable[iC] = round(((sin(((2.0 * M_PI)/LFO_SAMPLES) * iC) * LFO_RANGE) / 2.0) + (((sin(((20.0 * M_PI)/LFO_SAMPLES) * iC)) * LFO_RANGE) / 3.0));
+        lfoTable[iC] = ((sin(((2.0 * M_PI)/LFO_SAMPLES) * iC) * LFO_RANGE) / 2.0) + (((sin(((20.0 * M_PI)/LFO_SAMPLES) * iC)) * LFO_RANGE) / 3.0);
     }
     
     return;
     
 }
-
-/* // TODO: move this to one of the data files, use in output_adat.cpp, output_tdm.cpp, etc
-static const audio_block_f32_t zeroblock = {
-    0.0f, 0.0f, 0.0f, {
-        0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-#if AUDIO_BLOCK_SAMPLES > 16
-        0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-#endif
-#if AUDIO_BLOCK_SAMPLES > 32
-        0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-#endif
-#if AUDIO_BLOCK_SAMPLES > 48
-        0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-#endif
-#if AUDIO_BLOCK_SAMPLES > 64
-        0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-#endif
-#if AUDIO_BLOCK_SAMPLES > 80
-        0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-#endif
-#if AUDIO_BLOCK_SAMPLES > 96
-        0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-#endif
-#if AUDIO_BLOCK_SAMPLES > 112
-        0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-#endif
-    } }; */
 
 void AudioEffectEnsemble_F32::update(void)
 {

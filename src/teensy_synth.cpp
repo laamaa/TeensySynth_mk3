@@ -13,29 +13,25 @@ void TeensySynth::init()
         //Create audio signal path for voice components
         patchOscAmp[i] = new AudioConnection_F32(waveform[i], 0, amp[i], 0);           //Main output connection
         patchOscAmp[i + NVOICES] = new AudioConnection_F32(waveform[i], 1, amp[i], 1); //Aux output connection
-        patchAmpMix[i] = new AudioConnection_F32(amp[i], 0, mix, i);
+        patchAmpMix[i] = new AudioConnection_F32(amp[i], 0, mixOsc, i);
     }
 
-    /*     //Pointers for audio signal path connections
-    AudioConnection_F32 *patchOscAmp[NVOICES * 2];
-    AudioConnection_F32 *patchAmpMix[NVOICES];
-    AudioConnection_F32 *patchMixChorus;
-    AudioConnection_F32 *patchMixMaster[2];
-    AudioConnection_F32 *patchChorusMaster[2];
-    AudioConnection_F32 *patchMasterFlt[2];
-    AudioConnection_F32 *patchFltConverter[2];
-    AudioConnection *patchConverterI2s[2]; */
-
     //Create audio signal path for master & fx
-    patchMixChorus = new AudioConnection_F32(mix, chorus);
-    patchMixMaster[0] = new AudioConnection_F32(mix, 0, masterL, 0);
-    patchMixMaster[1] = new AudioConnection_F32(mix, 0, masterR, 0);
-    patchChorusMaster[0] = new AudioConnection_F32(chorus, 0, masterL, 1);
-    patchChorusMaster[1] = new AudioConnection_F32(chorus, 1, masterR, 1);
-    patchMasterFlt[0] = new AudioConnection_F32(masterL, flt[0]);
-    patchMasterFlt[1] = new AudioConnection_F32(masterR, flt[1]);
-    patchFltConverter[0] = new AudioConnection_F32(flt[0], float2Int1);
-    patchFltConverter[1] = new AudioConnection_F32(flt[1], float2Int2);
+    patchMixOscMixChorus = new AudioConnection_F32(mixOsc, 0, mixChorus, 0);
+    patchMixOscFxReverbHighpass = new AudioConnection_F32(mixOsc, 0, fxReverbHighpass, 0);
+    patchFxReverbHighpassFxReverb = new AudioConnection_F32(fxReverbHighpass, fxReverb);
+    patchFxReverbMixChorus = new AudioConnection_F32(fxReverb, 0, mixChorus, 1);
+    patchMixChorusFxchorus = new AudioConnection_F32(mixChorus, fxChorus);
+    patchMixOscMixMaster[0] = new AudioConnection_F32(mixOsc, 0, mixMasterL, 0);
+    patchMixOscMixMaster[1] = new AudioConnection_F32(mixOsc, 0, mixMasterR, 0);
+    patchFxChorusMixMaster[0] = new AudioConnection_F32(fxChorus, 0, mixMasterL, 1);
+    patchFxChorusMixMaster[1] = new AudioConnection_F32(fxChorus, 1, mixMasterR, 1);
+    patchFxReverbMixMaster[0] = new AudioConnection_F32(fxReverb, 0, mixMasterL, 2);
+    patchFxReverbMixMaster[1] = new AudioConnection_F32(fxReverb, 1, mixMasterR, 2);
+    patchMixMasterFxFlt[0] = new AudioConnection_F32(mixMasterL, fxFlt[0]);
+    patchMixMasterFxFlt[1] = new AudioConnection_F32(mixMasterR, fxFlt[1]);
+    patchFxFltConverter[0] = new AudioConnection_F32(fxFlt[0], float2Int1);
+    patchFxFltConverter[1] = new AudioConnection_F32(fxFlt[1], float2Int2);
     patchConverterI2s[0] = new AudioConnection(float2Int1, 0, i2s1, 0);
     patchConverterI2s[1] = new AudioConnection(float2Int2, 0, i2s1, 1);
 
@@ -49,14 +45,22 @@ void TeensySynth::init()
         } while (++o < end);
     }
 
-    masterL.gain(0, 0.8f);
-    masterL.gain(1, 0.8f);
-    masterR.gain(0, 0.8f);
-    masterR.gain(1, 0.8f);
+    mixMasterL.gain(0, MIX_LEVEL-0.1f); //dry signal L
+    mixMasterL.gain(1, MIX_LEVEL-0.1f); //chorus signal L
+    mixMasterL.gain(2, 0.1f); //reverb signal L
+    mixMasterR.gain(0, MIX_LEVEL-0.1f); //dry signal R
+    mixMasterR.gain(1, MIX_LEVEL-0.1f); //chorus signal R
+    mixMasterR.gain(2, 0.1f); //reverb signal R
+
+    mixChorus.gain(1, CHORUS_REV_LEVEL); // Reverb -> Chorus level
+    fxReverb.roomsize(0.7f);
+    fxReverb.damping(0.7f);
+    fxReverbHighpass.setHighpass(0,100.0f);
 
     updateOscillator();
     updateOscillatorBalance();
     updateFilter();
+    updateReverb();
 }
 
 //Handles MIDI note on events
@@ -313,9 +317,9 @@ void TeensySynth::updateFilter()
 {
     for (int i = 0; i < 2; i++)
     {
-        flt[i].frequency(currentPatch.filterCutoff);
-        flt[i].resonance(currentPatch.filterResonance);
-        flt[i].drive(currentPatch.filterDrive);
+        fxFlt[i].frequency(currentPatch.filterCutoff);
+        fxFlt[i].resonance(currentPatch.filterResonance);
+        fxFlt[i].drive(currentPatch.filterDrive);
     }
 }
 
@@ -357,4 +361,16 @@ void TeensySynth::updateOscillatorBalance()
         o->amp->gain(0, OSC_LEVEL - currentPatch.balance);
         o->amp->gain(1, currentPatch.balance);
     } while (++o < end);
+}
+
+void TeensySynth::updateReverb()
+{
+    fxReverb.roomsize(currentPatch.reverbSize);
+    mixMasterL.gain(0, MIX_LEVEL-currentPatch.reverbDepth); //dry signal L
+    mixMasterL.gain(1, MIX_LEVEL-currentPatch.reverbDepth); //chorus signal L
+    mixMasterL.gain(2, currentPatch.reverbDepth); //reverb signal L
+    mixMasterR.gain(0, MIX_LEVEL-currentPatch.reverbDepth); //dry signal R
+    mixMasterR.gain(1, MIX_LEVEL-currentPatch.reverbDepth); //chorus signal R
+    mixMasterR.gain(2, currentPatch.reverbDepth); //reverb signal R
+    mixChorus.gain(1,CHORUS_REV_LEVEL*currentPatch.reverbDepth); //Reverb -> Chorus level
 }

@@ -1,12 +1,15 @@
 #include "hardware_controls.h"
 #include "settings.h"
+#include <Encoder.h>
 
 void HardwareControls::checkControlValues(bool update)
 {
+    int i, ctlValue;
+
     //Potentiometers: all are connected to a single multiplexer so we just read them in a for loop
-    for (int i = 0; i < 16; i++)
+    for (i = 0; i < 16; i++)
     {
-        int ctlValue = readMux(i);
+        ctlValue = readMux(i);
         if (ctlValue < 10)
             ctlValue = 0;
         if ((ctlValue == 1023 && currentCtlValue[i] != 1023) || ctlValue > currentCtlValue[i] + potThreshold[i] || ctlValue < currentCtlValue[i] - potThreshold[i])
@@ -26,22 +29,60 @@ void HardwareControls::checkControlValues(bool update)
                 currentCtlValue[i] = ctlValue;
         }
     }
+
+    //Check encoder readings. Sorry for this mess.
+    for (i = 0; i < 2; i++)
+    {
+        ctlValue = encoder[i]->readAndReset();
+        if (ctlValue < 0)
+        {
+            //The crappy encoders that I bought from Aliexpress seem to be like 1 click = 4 increments.. trying to work around that
+            if (encValue[i] < 0)
+                encValue[i] = 0;
+            encValue[i]++;
+            if (encValue[i] % 4 == 0)
+            {
+                currentCtlValue[CTL_ENC_1 + i]++;
+                updateTeensySynth(CTL_ENC_1 + i, currentCtlValue[CTL_ENC_1 + i]);
+            }
+        }
+        else if (ctlValue > 0)
+        {
+            if (encValue[i] > 0)
+                encValue[i] = 0;
+            encValue[i]--;
+            if (encValue[i] % 4 == 0)
+            {
+                currentCtlValue[CTL_ENC_1 + i]--;
+                updateTeensySynth(CTL_ENC_1 + i, currentCtlValue[CTL_ENC_1 + i]);
+            }
+        }
+    }
 }
 
 void HardwareControls::updateTeensySynth(uint8_t ctl, int value)
 {
     switch (ctl)
     {
+    case CTL_ENC_1:
+        CONSTRAIN(currentCtlValue[CTL_ENC_1], 0, 16);
+        Serial.println(currentCtlValue[CTL_ENC_1]);
+        ts->setSynthEngine(currentCtlValue[CTL_ENC_1]);
+        break;
+    case CTL_ENC_2:
+        Serial.println(currentCtlValue[CTL_ENC_2]);
+        break;
     case CTL_DECAY:
         ts->setOscillatorDecay((float)value / 1023.0f);
         break;
-    case CTL_FLT_ATK:
-    {
-        uint8_t engine = round(((float)value/1023.0f)*16);
-        Serial.println(engine);
-        ts->setSynthEngine(engine);
+    case CTL_REV_SIZE:
+        ts->setReverbSize((float)value / 1023.0f);
         break;
-    }
+    case CTL_REV_DEPTH:
+        ts->setReverbDepth(powf((value / 101.53), 3) / 1023.0f * MIX_LEVEL);
+        break;
+    case CTL_CHORUS_DEPTH:
+        break;
     case CTL_HARMONICS:
         ts->setOscillatorHarmonics((float)value / 1023.0f);
         break;
@@ -79,6 +120,9 @@ void HardwareControls::updateTeensySynth(uint8_t ctl, int value)
 
 void HardwareControls::init()
 {
+    encoder[0] = new Encoder(rotaryPin[0][0], rotaryPin[0][1]);
+    encoder[1] = new Encoder(rotaryPin[1][0], rotaryPin[1][1]);
+
     //Set 16ch multiplexer control pins to mode OUTPUT
     for (uint8_t i = 0; i < 4; i++)
         pinMode(muxControlPin[i], OUTPUT);

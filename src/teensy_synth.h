@@ -6,6 +6,7 @@
 #include "dsp/synth_plaits_f32.h"
 #include "dsp/filter_moog_f32.h"
 #include "dsp/effect_ensemble_f32.h"
+#include "dsp/effect_freeverb_f32.h"
 #include <OpenAudio_ArduinoLibrary.h>
 
 class TeensySynth
@@ -102,26 +103,48 @@ public:
         updateOscillator();
     }
 
+    inline void setReverbSize(float size)
+    {
+        CONSTRAIN(size,0.1f,0.95f);
+        currentPatch.reverbSize = size;
+        updateReverb();
+    }
+
+    inline void setReverbDepth(float depth)
+    {
+        CONSTRAIN(depth,0.0f,MIX_LEVEL);
+        currentPatch.reverbDepth = depth;
+        updateReverb();
+    }
+
 private:
     //Audio signal path components
     AudioSynthPlaits_F32 waveform[NVOICES];
     AudioMixer4_F32 amp[NVOICES];
-    AudioMixer8_F32 mix;    
-    AudioEffectEnsemble_F32 chorus;
-    AudioMixer4_F32 masterL;
-    AudioMixer4_F32 masterR;
-    AudioFilterMoog_F32 flt[2];    
+    AudioMixer8_F32 mixOsc;
+    AudioFilterBiquad_F32 fxReverbHighpass;
+    AudioEffectFreeverbStereo_F32 fxReverb;
+    AudioMixer4_F32 mixChorus;
+    AudioEffectEnsemble_F32 fxChorus;
+    AudioMixer4_F32 mixMasterL;
+    AudioMixer4_F32 mixMasterR;
+    AudioFilterMoog_F32 fxFlt[2];    
     AudioConvert_F32toI16 float2Int1, float2Int2;
     AudioOutputI2S i2s1;
 
     //Pointers for audio signal path connections
     AudioConnection_F32 *patchOscAmp[NVOICES * 2];
     AudioConnection_F32 *patchAmpMix[NVOICES];
-    AudioConnection_F32 *patchMixChorus;
-    AudioConnection_F32 *patchMixMaster[2];
-    AudioConnection_F32 *patchChorusMaster[2];
-    AudioConnection_F32 *patchMasterFlt[2];
-    AudioConnection_F32 *patchFltConverter[2];
+    AudioConnection_F32 *patchMixOscMixChorus;
+    AudioConnection_F32 *patchMixOscFxReverbHighpass;
+    AudioConnection_F32 *patchFxReverbHighpassFxReverb;
+    AudioConnection_F32 *patchFxReverbMixChorus;
+    AudioConnection_F32 *patchFxReverbMixMaster[2];
+    AudioConnection_F32 *patchMixChorusFxchorus;
+    AudioConnection_F32 *patchMixOscMixMaster[2];
+    AudioConnection_F32 *patchFxChorusMixMaster[2];
+    AudioConnection_F32 *patchMixMasterFxFlt[2];
+    AudioConnection_F32 *patchFxFltConverter[2];
     AudioConnection *patchConverterI2s[2];
 
     //Structure for storing envelope parameters
@@ -154,6 +177,8 @@ private:
         uint16_t portamentoTime = 200;
         bool velocityOn = false; //velocity enabled
         bool polyOn = true;      //polyphonic mode on
+        float reverbSize = 0.7f;
+        float reverbDepth = 0.1f;
     };
 
     struct Oscillator
@@ -202,6 +227,7 @@ private:
     void updateEngine();
     void updateOscillatorBalance();
     void updateDecay();
+    void updateReverb();
 };
 
 #endif

@@ -14,7 +14,13 @@
 #define PRESETS 16
 
 // Oscillator signal attenuation, happens right after the oscillator. Range = 0.0f-1.0f.
-#define OSC_LEVEL 0.8f
+#define OSC_LEVEL 0.7f
+
+// Reference level for mixing signals in master bus. Range isn't limited, but sensible values are 0.2f-0.9f.
+#define MIX_LEVEL 0.8f
+
+// How much reverb should be sent to chorus. Range = 0.0f - 1.0f
+#define CHORUS_REV_LEVEL 0.3f
 
 // Initial potentiometer update threshold value, to prevent noise from triggering parameter updates
 #define POT_THRESHOLD 5

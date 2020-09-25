@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include "teensy_synth.h"
+#include <Encoder.h>
 
 class HardwareControls
 {
@@ -25,8 +26,8 @@ private:
     //Teensy pin where 16ch multiplexer value pin is connected
     const uint8_t muxValuePin = 14;
 
-    //Teensy pins where rotary encoders are connected
-    const uint8_t rotaryPin[2][2] = {{8, 9}, {10, 11}};
+    //Teensy pins where rotary encoders are connected. First two in array are the encoder pins, 3. is the encoder push button
+    const uint8_t rotaryPin[2][3] = {{8, 9, 10}, {11, 12, 14}};
 
     //HW control layout enum: potentiometers first (left to right, top to bottom), encoders second and switches last
     enum HwControl
@@ -34,16 +35,16 @@ private:
         CTL_HARMONICS,
         CTL_TIMBRE,
         CTL_MORPH,
-        CTL_BALANCE,
         CTL_DECAY,
+        CTL_BALANCE,
         CTL_AMP_DEC,
         CTL_AMP_SUS,
         CTL_AMP_REL,
         CTL_LFO_RATE,
         CTL_LFO_DEPTH,
-        CTL_FLT_ATK,
-        CTL_FLT_DEC,
-        CTL_FLT_SUS,
+        CTL_REV_SIZE,
+        CTL_REV_DEPTH,
+        CTL_CHORUS_DEPTH,
         CTL_FLT_DEPTH,
         CTL_FLT_RESO,
         CTL_FLT_CUTOFF,
@@ -55,7 +56,7 @@ private:
     };
 
     //Signal multiplexer channel select binary values
-    const int muxChannel[16][4] = {
+    const uint8_t muxChannel[16][4] = {
         {0, 0, 0, 0}, //channel 0
         {1, 0, 0, 0}, //channel 1
         {0, 1, 0, 0}, //channel 2
@@ -74,10 +75,17 @@ private:
         {1, 1, 1, 1}  //channel 15
     };
 
+    //Pointer to the synth controller
     TeensySynth *ts;
 
+    //We use Teensy's encoder library to make working with the encoders easier
+    Encoder *encoder[2];
+
     //Current pot/switch readings
-    int currentCtlValue[LAST_CTL];
+    int16_t currentCtlValue[LAST_CTL];
+
+    //Encoders are so crappy that we need to have special treatment for them
+    int16_t encValue[2];
 
     /* Thresholds for updating parameters from potentiometer readings
      * The default value is defined in settings.h, but this is also an array 
