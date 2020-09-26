@@ -20,7 +20,10 @@
 #define MIX_LEVEL 0.8f
 
 // How much reverb should be sent to chorus. Range = 0.0f - 1.0f
-#define CHORUS_REV_LEVEL 0.3f
+#define CHORUS_REV_LEVEL 0.4f
+
+// Pre-reverb highpass filter frequency. Range = 0.0f >
+#define REV_HIGHPASS 150.0f
 
 // Initial potentiometer update threshold value, to prevent noise from triggering parameter updates
 #define POT_THRESHOLD 5

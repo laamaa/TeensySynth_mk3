@@ -37,22 +37,22 @@ private:
         CTL_MORPH,
         CTL_DECAY,
         CTL_BALANCE,
-        CTL_AMP_DEC,
-        CTL_AMP_SUS,
-        CTL_AMP_REL,
-        CTL_LFO_RATE,
+        CTL_LPG_COLOUR,
+        CTL_FREQMOD_AMOUNT,
+        CTL_TIMBREMOD_AMOUNT,
+        CTL_MORPHMOD_AMOUNT,
         CTL_LFO_DEPTH,
+        CTL_VOLUME,
         CTL_REV_SIZE,
         CTL_REV_DEPTH,
         CTL_CHORUS_DEPTH,
-        CTL_FLT_DEPTH,
         CTL_FLT_RESO,
         CTL_FLT_CUTOFF,
         CTL_ENC_1,
         CTL_ENC_2,
         CTL_SW_1,
         CTL_SW_2,
-        LAST_CTL
+        LAST_CTL // Not an actual control, just a value for allocating arrays
     };
 
     //Signal multiplexer channel select binary values

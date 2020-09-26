@@ -71,13 +71,13 @@ void readMidi()
         switch (usbMIDI.getType())
         {
         case usbMIDI.NoteOn:
-            ts.OnNoteOn(usbMIDI.getChannel(), usbMIDI.getData1(), usbMIDI.getData2());
+            ts.noteOn(usbMIDI.getChannel(), usbMIDI.getData1(), usbMIDI.getData2());
             break;
         case usbMIDI.NoteOff:
-            ts.OnNoteOff(usbMIDI.getChannel(), usbMIDI.getData1(), usbMIDI.getData2());
+            ts.noteOff(usbMIDI.getChannel(), usbMIDI.getData1(), usbMIDI.getData2());
             break;
         case usbMIDI.ControlChange:
-            ts.OnControlChange(usbMIDI.getChannel(), usbMIDI.getData1(), usbMIDI.getData2());
+            ts.OnControlChange(usbMIDI.getChannel(), usbMIDI.getData1(), usbMIDI.getData2()); //TODO: move handling midi stuff to its own class
             break;
         default:
             break;

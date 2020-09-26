@@ -45,26 +45,24 @@ void TeensySynth::init()
         } while (++o < end);
     }
 
-    mixMasterL.gain(0, MIX_LEVEL-0.1f); //dry signal L
-    mixMasterL.gain(1, MIX_LEVEL-0.1f); //chorus signal L
-    mixMasterL.gain(2, 0.1f); //reverb signal L
-    mixMasterR.gain(0, MIX_LEVEL-0.1f); //dry signal R
-    mixMasterR.gain(1, MIX_LEVEL-0.1f); //chorus signal R
-    mixMasterR.gain(2, 0.1f); //reverb signal R
+    mixMasterL.gain(0, MIX_LEVEL - 0.1f); //dry signal L
+    mixMasterL.gain(1, MIX_LEVEL - 0.1f); //chorus signal L
+    mixMasterL.gain(2, 0.1f);             //reverb signal L
+    mixMasterR.gain(0, MIX_LEVEL - 0.1f); //dry signal R
+    mixMasterR.gain(1, MIX_LEVEL - 0.1f); //chorus signal R
+    mixMasterR.gain(2, 0.1f);             //reverb signal R
 
-    mixChorus.gain(1, CHORUS_REV_LEVEL); // Reverb -> Chorus level
+    fxReverbHighpass.setHighpass(0, REV_HIGHPASS); // Highpass filter before reverb
     fxReverb.roomsize(0.7f);
     fxReverb.damping(0.7f);
-    fxReverbHighpass.setHighpass(0,100.0f);
 
-    updateOscillator();
-    updateOscillatorBalance();
-    updateFilter();
-    updateReverb();
+    mixChorus.gain(1, CHORUS_REV_LEVEL); // Reverb -> Chorus level
+
+    resetAll();
 }
 
 //Handles MIDI note on events
-void TeensySynth::OnNoteOn(uint8_t channel, uint8_t note, uint8_t velocity)
+void TeensySynth::noteOn(uint8_t channel, uint8_t note, uint8_t velocity)
 {
     if (omniOn || channel != SYNTH_MIDICHANNEL)
         return;
@@ -115,7 +113,7 @@ void TeensySynth::OnNoteOn(uint8_t channel, uint8_t note, uint8_t velocity)
 #if SYNTH_DEBUG > 0
             Serial.println("Stealing voice");
 #endif
-            curOsc = OnNoteOffReal(channel, *notesOn, velocity, true);
+            curOsc = noteOffReal(channel, *notesOn, velocity, true);
         }
         if (!curOsc)
             return;
@@ -130,7 +128,7 @@ void TeensySynth::OnNoteOn(uint8_t channel, uint8_t note, uint8_t velocity)
     return;
 }
 
-TeensySynth::Oscillator *TeensySynth::OnNoteOffReal(uint8_t channel, uint8_t note, uint8_t velocity, bool ignoreSustain)
+TeensySynth::Oscillator *TeensySynth::noteOffReal(uint8_t channel, uint8_t note, uint8_t velocity, bool ignoreSustain)
 {
     if (!omniOn && channel != SYNTH_MIDICHANNEL)
         return 0;
@@ -331,6 +329,11 @@ void TeensySynth::updateOscillator()
         o->wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::harmonics, currentPatch.harmonics);
         o->wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::timbre, currentPatch.timbre);
         o->wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::morph, currentPatch.morph);
+        o->wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::engine, currentPatch.engine);
+        o->wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::lpgColour, currentPatch.lpgColour);
+        o->wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::morphModulationAmount, currentPatch.morphMod);
+        o->wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::timbreModulationAmount, currentPatch.timbreMod);
+        o->wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::frequencyModulationAmount, currentPatch.freqMod);
     } while (++o < end);
 }
 
@@ -344,15 +347,6 @@ void TeensySynth::updateDecay()
     } while (++o < end);
 }
 
-void TeensySynth::updateEngine()
-{
-    Oscillator *o = oscs, *end = oscs + NVOICES;
-    do
-    {
-        o->wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::engine, currentPatch.engine);
-    } while (++o < end);
-}
-
 void TeensySynth::updateOscillatorBalance()
 {
     Oscillator *o = oscs, *end = oscs + NVOICES;
@@ -363,14 +357,14 @@ void TeensySynth::updateOscillatorBalance()
     } while (++o < end);
 }
 
-void TeensySynth::updateReverb()
+void TeensySynth::updateChorusAndReverb()
 {
     fxReverb.roomsize(currentPatch.reverbSize);
-    mixMasterL.gain(0, MIX_LEVEL-currentPatch.reverbDepth); //dry signal L
-    mixMasterL.gain(1, MIX_LEVEL-currentPatch.reverbDepth); //chorus signal L
-    mixMasterL.gain(2, currentPatch.reverbDepth); //reverb signal L
-    mixMasterR.gain(0, MIX_LEVEL-currentPatch.reverbDepth); //dry signal R
-    mixMasterR.gain(1, MIX_LEVEL-currentPatch.reverbDepth); //chorus signal R
-    mixMasterR.gain(2, currentPatch.reverbDepth); //reverb signal R
-    mixChorus.gain(1,CHORUS_REV_LEVEL*currentPatch.reverbDepth); //Reverb -> Chorus level
+    mixMasterL.gain(0, MIX_LEVEL - currentPatch.reverbDepth);                              //dry signal L
+    mixMasterL.gain(1, currentPatch.chorusDepth * (MIX_LEVEL - currentPatch.reverbDepth)); //chorus signal L
+    mixMasterL.gain(2, currentPatch.reverbDepth);                                          //reverb signal L
+    mixMasterR.gain(0, MIX_LEVEL - currentPatch.reverbDepth);                              //dry signal R
+    mixMasterR.gain(1, currentPatch.chorusDepth * (MIX_LEVEL - currentPatch.reverbDepth)); //chorus signal R
+    mixMasterR.gain(2, currentPatch.reverbDepth);                                          //reverb signal R
+    mixChorus.gain(1, CHORUS_REV_LEVEL * currentPatch.reverbDepth);                        //Reverb -> Chorus level
 }

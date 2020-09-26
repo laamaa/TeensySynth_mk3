@@ -72,6 +72,18 @@ void HardwareControls::updateTeensySynth(uint8_t ctl, int value)
     case CTL_ENC_2:
         Serial.println(currentCtlValue[CTL_ENC_2]);
         break;
+    case CTL_FREQMOD_AMOUNT:
+        ts->setFreqMod((float)value / 1023.0f);
+        break;
+    case CTL_TIMBREMOD_AMOUNT:
+        ts->setTimbreMod((float)value / 1023.0f);
+        break;
+    case CTL_MORPHMOD_AMOUNT:
+        ts->setMorphMod((float)value / 1023.0f);
+        break;
+    case CTL_LPG_COLOUR:
+        ts->setLpgColour((float)value / 1023.0f);
+        break;        
     case CTL_DECAY:
         ts->setOscillatorDecay((float)value / 1023.0f);
         break;
@@ -82,6 +94,7 @@ void HardwareControls::updateTeensySynth(uint8_t ctl, int value)
         ts->setReverbDepth(powf((value / 101.53), 3) / 1023.0f * MIX_LEVEL);
         break;
     case CTL_CHORUS_DEPTH:
+        ts->setChorusDepth(((float)value / 1023.0f));
         break;
     case CTL_HARMONICS:
         ts->setOscillatorHarmonics((float)value / 1023.0f);
