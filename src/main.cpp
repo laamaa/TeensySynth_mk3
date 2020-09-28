@@ -1,12 +1,17 @@
 //************LIBRARIES USED**************
-#include "settings.h"
-#include "teensy_synth.h"
-#include "hardware_controls.h"
+#include "inc/settings.h"
+#include "inc/synth.h"
+#include "inc/hardware_controls.h"
+#include "inc/gui.h"
+#include "inc/progmem_strings.h"
+#include "inc/midi_controls.h"
 
-TeensySynth ts;
+using namespace TeensySynth;
+
+Synth *ts;
+GUI *gui;
 HardwareControls *hw;
-
-IntervalTimer myTimer;
+MidiControls *midi;
 
 // Debug functions
 #if SYNTH_DEBUG > 0
@@ -64,27 +69,6 @@ void selectCommand(char c)
 }
 #endif
 
-void readMidi()
-{
-    while (usbMIDI.read(SYNTH_MIDICHANNEL))
-    {
-        switch (usbMIDI.getType())
-        {
-        case usbMIDI.NoteOn:
-            ts.noteOn(usbMIDI.getChannel(), usbMIDI.getData1(), usbMIDI.getData2());
-            break;
-        case usbMIDI.NoteOff:
-            ts.noteOff(usbMIDI.getChannel(), usbMIDI.getData1(), usbMIDI.getData2());
-            break;
-        case usbMIDI.ControlChange:
-            ts.OnControlChange(usbMIDI.getChannel(), usbMIDI.getData1(), usbMIDI.getData2()); //TODO: move handling midi stuff to its own class
-            break;
-        default:
-            break;
-        }
-    }
-}
-
 //************SETUP**************
 void setup()
 {
@@ -97,17 +81,24 @@ void setup()
     AudioMemory_F32(11);
 
     //Initialize the synth only after Serial is ok and audiomemory is allocated
-    ts.init();
+    ts = new Synth();
 
-    //Initialize hardware controls and pass a pointer to the main synth stuff
-    hw = new HardwareControls(&ts);
+    //Initialize the graphical user interface
+    gui = new GUI(ts);
+
+    //Initialize hardware controls
+    hw = new HardwareControls(ts, gui);
+
+    //Initialize MIDI controls
+    midi = new MidiControls(ts);
 }
 
 //************LOOP**************
 void loop()
 {
-    readMidi();
+    midi->update();
     hw->update();
+    gui->update();
 
 #if SYNTH_DEBUG > 0
     performanceCheck();

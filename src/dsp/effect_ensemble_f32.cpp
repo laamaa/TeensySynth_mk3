@@ -91,7 +91,7 @@ void AudioEffectEnsemble_F32::update(void)
 
         // wrap the input index
         inIndex++;
-        if (inIndex > (ENSEMBLE_BUFFER_SIZE - 1))
+        if (inIndex >= ENSEMBLE_BUFFER_SIZE)
             inIndex = 0;
 
         delayBuffer[inIndex] = block->data[i];
@@ -107,13 +107,13 @@ void AudioEffectEnsemble_F32::update(void)
         {
             // wrap the lfo index
             lfoIndex1++;
-            if (lfoIndex1 > (LFO_SIZE - 1))
+            if (lfoIndex1 >= LFO_SIZE)
                 lfoIndex1 = 0;
             lfoIndex2++;
-            if (lfoIndex2 > (LFO_SIZE - 1))
+            if (lfoIndex2 >= LFO_SIZE)
                 lfoIndex2 = 0;
             lfoIndex3++;
-            if (lfoIndex3 > (LFO_SIZE - 1))
+            if (lfoIndex3 >= LFO_SIZE)
                 lfoIndex3 = 0;
 
             // reset the counter
@@ -122,15 +122,15 @@ void AudioEffectEnsemble_F32::update(void)
 
         // wrap the output index
         outIndex1++;
-        if (outIndex1 > (ENSEMBLE_BUFFER_SIZE - 1))
+        if (outIndex1 >= ENSEMBLE_BUFFER_SIZE)
             outIndex1 = 0;
 
         outIndex2++;
-        if (outIndex2 > (ENSEMBLE_BUFFER_SIZE - 1))
+        if (outIndex2 >= ENSEMBLE_BUFFER_SIZE)
             outIndex2 = 0;
 
         outIndex3++;
-        if (outIndex3 > (ENSEMBLE_BUFFER_SIZE - 1))
+        if (outIndex3 >= ENSEMBLE_BUFFER_SIZE)
             outIndex3 = 0;
 
         // get the delay from the wavetable

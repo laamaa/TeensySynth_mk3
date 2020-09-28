@@ -4,15 +4,16 @@
       "name": "VisualTeensy",
       "includePath": [
         "src/**",
-        "C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy4",
-        "C:/Users/hipho/Documents/Arduino/libraries/OpenAudio_ArduinoLibrary/**",
+        "core",
+        "lib/OpenAudio_ArduinoLibrary/**",
         "lib/Audio/**",
         "lib/Encoder/**",
         "lib/OpenAudio_ArduinoLibrary/**",
         "lib/SD/**",
         "lib/SerialFlash/**",
         "lib/SPI/**",
-        "lib/Wire/**"
+        "lib/Wire/**",
+        "lib/U8g2/src/**"
       ],
       "forcedInclude": [],
       "defines": [
