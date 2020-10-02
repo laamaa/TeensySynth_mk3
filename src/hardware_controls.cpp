@@ -45,8 +45,8 @@ namespace TeensySynth
                 encValue[i]++;
                 if (encValue[i] % 4 == 0)
                 {
-                    currentCtlValue[CTL_ENC_1 + i]++;
-                    updateTeensySynth(CTL_ENC_1 + i, currentCtlValue[CTL_ENC_1 + i]);
+                    //currentCtlValue[CTL_ENC_1 + i]++;
+                    gui->menuEvent(i, GUI::EventType::EVENT_NEXT);
                 }
             }
             else if (ctlValue > 0)
@@ -56,8 +56,8 @@ namespace TeensySynth
                 encValue[i]--;
                 if (encValue[i] % 4 == 0)
                 {
-                    currentCtlValue[CTL_ENC_1 + i]--;
-                    updateTeensySynth(CTL_ENC_1 + i, currentCtlValue[CTL_ENC_1 + i]);
+                    //currentCtlValue[CTL_ENC_1 + i]--;
+                    gui->menuEvent(i, GUI::EventType::EVENT_PREV);
                 }
             }
         }

@@ -5,6 +5,7 @@ namespace TeensySynth
 {
     void MidiControls::init()
     {
+
     }
 
     void MidiControls::update()

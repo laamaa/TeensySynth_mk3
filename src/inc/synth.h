@@ -14,9 +14,41 @@ namespace TeensySynth
     class Synth
     {
     public:
-        Synth() {
+        Synth()
+        {
+            //Allocate audio memory. Floating point and integer versions need their own blocks.
+            AudioMemory(3);
+            AudioMemory_F32(11);
+            delay(500);
+            //Initialize the synth only after Serial is ok and audiomemory is allocated
             init();
         }
+        ~Synth()
+        {
+            //Delete dynamically allocated AudioConnections
+            for (int i = 0; i < NVOICES; i++)
+            {
+                delete patchOscAmp[i + NVOICES];
+                delete patchOscAmp[i];
+                delete patchAmpMix[i];
+            }
+            delete patchMixOscMixChorus;
+            delete patchMixOscFxReverbHighpass;
+            delete patchFxReverbHighpassFxReverb;
+            delete patchFxReverbMixChorus;
+            delete patchMixChorusFxchorus;
+            for (int i = 0; i < 2; i++)
+            {
+                delete patchFxReverbMixMaster[i];
+                delete patchMixOscMixMaster[i];
+                delete patchFxChorusMixMaster[i];
+                delete patchMixMasterFxFlt[i];
+                delete patchFxFltConverter[i];
+                delete patchConverterI2s[i];
+            }
+        }
+
+        void init();
 
         //Trigger a new voice
         void noteOn(uint8_t channel, uint8_t note, uint8_t velocity);
@@ -237,6 +269,25 @@ namespace TeensySynth
             return currentPatch.lpgColour;
         }
 
+        AudioStream &getMasterL()
+        {
+            return float2Int1;
+        }
+
+        AudioStream &getMasterR()
+        {
+            return float2Int2;
+        }
+
+#if SYNTH_DEBUG > 0
+        float statsCpu = 0;
+        uint8_t statsMemI16 = 0;
+        uint8_t statsMemF32 = 0;
+        void performanceCheck();
+        inline void printResources(float cpu, uint8_t memF32, uint8_t memI16);
+        void selectCommand(char c);
+#endif
+
     private:
         //Audio signal path components
         AudioSynthPlaits_F32 waveform[NVOICES];
@@ -334,7 +385,6 @@ namespace TeensySynth
 
         const float filterMaxFreq = AUDIO_SAMPLE_RATE_EXACT / 2.5;
 
-        void init();
         inline void initOscillators();
         void notesAdd(int8_t *notes, uint8_t note);
         int8_t notesDel(int8_t *notes, uint8_t note);
