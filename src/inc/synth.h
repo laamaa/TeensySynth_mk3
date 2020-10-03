@@ -16,12 +16,6 @@ namespace TeensySynth
     public:
         Synth()
         {
-            //Allocate audio memory. Floating point and integer versions need their own blocks.
-            AudioMemory(3);
-            AudioMemory_F32(11);
-            delay(500);
-            //Initialize the synth only after Serial is ok and audiomemory is allocated
-            init();
         }
         ~Synth()
         {
@@ -327,7 +321,14 @@ namespace TeensySynth
             float release = 0.0f;
         };
 
-        //Structure for storing presets and current instrument settings
+        struct Oscillator
+        {
+            AudioSynthPlaits_F32 *wf;
+            AudioMixer4_F32 *amp;
+            int8_t note;
+            uint8_t velocity;
+        };
+
         struct Patch
         {
             int engine = 0; // Plaits synth engine number
@@ -341,7 +342,7 @@ namespace TeensySynth
             float freqMod = 0.0f;
             float timbreMod = 0.0f;
             float morphMod = 0.0f;
-            float filterCutoff = AUDIO_SAMPLE_RATE_EXACT / 2.5;
+            float filterCutoff = 19200.0f;
             float filterResonance = 1.0f;
             float filterDrive = 1.0f;
             bool portamentoOn = false;
@@ -351,14 +352,6 @@ namespace TeensySynth
             float reverbSize = 0.7f;
             float reverbDepth = 0.1f;
             float chorusDepth = MIX_LEVEL;
-        };
-
-        struct Oscillator
-        {
-            AudioSynthPlaits_F32 *wf;
-            AudioMixer4_F32 *amp;
-            int8_t note;
-            uint8_t velocity;
         };
 
         //These are used to store active notes
@@ -399,6 +392,9 @@ namespace TeensySynth
         void updateOscillatorBalance();
         void updateDecay();
         void updateChorusAndReverb();
+        //load patches saved in flash memory, needs a pointer to an array with enough space for all presets (use NUM_PRESETS defined in settings.h)
+        void loadPatchesFromFlash(Patch * patches);
+        void savePatchesToFlash(Patch * patches);        
     };
 } // namespace TeensySynth
 #endif

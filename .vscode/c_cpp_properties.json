@@ -13,7 +13,8 @@
         "lib/SerialFlash/**",
         "lib/SPI/**",
         "lib/Wire/**",
-        "lib/U8g2/src/**"
+        "lib/OneBitDisplay/src/**",
+        "lib/BitBang_I2C/src/**"
       ],
       "forcedInclude": [],
       "defines": [

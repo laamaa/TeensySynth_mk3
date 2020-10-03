@@ -28,6 +28,9 @@
 // Initial potentiometer update threshold value, to prevent noise from triggering parameter updates
 #define POT_THRESHOLD 6
 
+//Idle timeout in ms for hiding menu
+#define MENU_TIMEOUT 4000
+
 //Constrain macro, borrowed from stmlib
 #define CONSTRAIN(var, min, max) \
   if (var < (min)) { \

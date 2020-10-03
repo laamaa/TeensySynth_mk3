@@ -8,6 +8,10 @@ namespace TeensySynth
     //Inititializes audio signal path and default values for its components
     void Synth::init()
     {
+            //Allocate audio memory. Floating point and integer versions need their own blocks.
+            AudioMemory(3);
+            AudioMemory_F32(11);
+            delay(500);        
 #if SYNTH_DEBUG > 0
         // Open serial communications and wait for port to open:
         Serial.begin(115200);

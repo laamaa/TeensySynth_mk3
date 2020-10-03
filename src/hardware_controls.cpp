@@ -5,7 +5,66 @@
 namespace TeensySynth
 {
 
-    void HardwareControls::checkControlValues(bool update)
+    //Check encoder readings. Sorry for this mess.
+    void HardwareControls::readAndProcessEncoders(bool update)
+    {
+        int i, ctlValue;
+        for (i = 0; i < 2; i++)
+        {
+            //Read the current encoder turning direction
+            ctlValue = encoder[i]->readAndReset();
+            if (ctlValue < 0)
+            {
+                //The crappy encoders that I bought from Aliexpress seem to be like 1 click = 4 increments.. trying to work around that
+                if (encValue[i] < 0)
+                    encValue[i] = 0;
+                encValue[i]++;
+                if (encValue[i] % 4 == 0)
+                {
+                    if (gui->menuIsOpen == true)
+                    {
+                        gui->menuEvent(i, GUI::EventType::EVENT_NEXT);
+#if SYNTH_DEBUG > 1
+                        Serial.println(F("Menu active, EVENT_NEXT"));
+#endif
+                    }
+                    else
+                    {
+#if SYNTH_DEBUG > 1
+                        Serial.println(F("Encoder value increase"));
+#endif
+                        currentCtlValue[CTL_ENC_1 + i]++;
+                        if (update)
+                            updateTeensySynth(CTL_ENC_1 + i, currentCtlValue[CTL_ENC_1 + i]);
+                    }
+                }
+            }
+            else if (ctlValue > 0)
+            {
+                if (encValue[i] > 0)
+                    encValue[i] = 0;
+                encValue[i]--;
+                if (encValue[i] % 4 == 0)
+                {
+                    if (gui->menuIsOpen == true)
+                    {
+                        gui->menuEvent(i, GUI::EventType::EVENT_PREV);
+                    }
+                    else
+                    {
+#if SYNTH_DEBUG > 1
+                        Serial.println(F("Encoder value decrease"));
+#endif
+                        currentCtlValue[CTL_ENC_1 + i]--;
+                        if (update)
+                            updateTeensySynth(CTL_ENC_1 + i, currentCtlValue[CTL_ENC_1 + i]);
+                    }
+                }
+            }
+        }
+    }
+
+    void HardwareControls::readAndProcessPotentiometers(bool update)
     {
         int i, ctlValue;
 
@@ -32,35 +91,12 @@ namespace TeensySynth
                     currentCtlValue[i] = ctlValue;
             }
         }
+    }
 
-        //Check encoder readings. Sorry for this mess.
-        for (i = 0; i < 2; i++)
-        {
-            ctlValue = encoder[i]->readAndReset();
-            if (ctlValue < 0)
-            {
-                //The crappy encoders that I bought from Aliexpress seem to be like 1 click = 4 increments.. trying to work around that
-                if (encValue[i] < 0)
-                    encValue[i] = 0;
-                encValue[i]++;
-                if (encValue[i] % 4 == 0)
-                {
-                    //currentCtlValue[CTL_ENC_1 + i]++;
-                    gui->menuEvent(i, GUI::EventType::EVENT_NEXT);
-                }
-            }
-            else if (ctlValue > 0)
-            {
-                if (encValue[i] > 0)
-                    encValue[i] = 0;
-                encValue[i]--;
-                if (encValue[i] % 4 == 0)
-                {
-                    //currentCtlValue[CTL_ENC_1 + i]--;
-                    gui->menuEvent(i, GUI::EventType::EVENT_PREV);
-                }
-            }
-        }
+    void HardwareControls::checkControlValues(bool update)
+    {
+        readAndProcessPotentiometers(update);
+        readAndProcessEncoders(update);
     }
 
     void HardwareControls::updateTeensySynth(uint8_t ctl, int value)
@@ -68,12 +104,13 @@ namespace TeensySynth
         switch (ctl)
         {
         case CTL_ENC_1:
-            CONSTRAIN(currentCtlValue[CTL_ENC_1], 0, 16);
-            Serial.println(currentCtlValue[CTL_ENC_1]);
+            //Enc1 = set synth engine
+            CONSTRAIN(currentCtlValue[CTL_ENC_1], 0, 16); //16 is the number of synth engines available
             ts->setSynthEngine(currentCtlValue[CTL_ENC_1]);
             break;
         case CTL_ENC_2:
-            Serial.println(currentCtlValue[CTL_ENC_2]);
+            //Enc2 = Load preset
+            //TODO
             break;
         case CTL_SW_1:
             break;

@@ -3,6 +3,7 @@
 #include "inc/synth.h"
 #include "inc/hardware_controls.h"
 #include "inc/gui.h"
+//#include "inc/oscilloscope.h"
 #include "inc/progmem_strings.h"
 #include "inc/midi_controls.h"
 
@@ -12,11 +13,15 @@ Synth ts;
 GUI gui(&ts);
 HardwareControls hw(&ts, &gui);
 MidiControls midi(&ts);
-//Oscilloscope oscilloscope(&ts,&gui);
+//Oscilloscope oscilloscope(&ts,&gui); //unfortunately I2C is too slow for this to work nicely :((
 
 //************SETUP**************
 void setup()
 {
+    ts.init();
+    gui.init();
+    hw.init();
+    midi.init();
 }
 
 //************LOOP**************

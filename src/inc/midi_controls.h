@@ -11,14 +11,14 @@ namespace TeensySynth
         MidiControls(Synth *synth)
         {
             ts = synth;
-            init();
         }
 
         void update();
+        void init();
 
     private:
         Synth *ts;
-        void init();
+        
         void OnControlChange(uint8_t channel, uint8_t control, uint8_t value);
         void OnProgramChange(uint8_t channel, uint8_t program);
     };

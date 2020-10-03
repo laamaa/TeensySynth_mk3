@@ -14,7 +14,6 @@ namespace TeensySynth
     public:
         HardwareControls(Synth *tsPointer, GUI *guiPointer)
         {
-            init();
             ts = tsPointer;
             gui = guiPointer;
         }
@@ -23,6 +22,8 @@ namespace TeensySynth
         {
             checkControlValues(1);
         }
+
+        void init();        
 
     private:
         //Teensy pins where 16ch multiplexer control pins are connected
@@ -111,9 +112,11 @@ namespace TeensySynth
 
         void updateTeensySynth(uint8_t ctl, int value);
 
+        void readAndProcessPotentiometers(bool update);
+        void readAndProcessEncoders(bool update);
         void checkControlValues(bool update);
 
-        void init();
+
     };
 } // namespace TeensySynth
 
