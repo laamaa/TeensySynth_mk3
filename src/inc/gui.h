@@ -11,10 +11,7 @@ namespace TeensySynth
     class GUI
     {
     public:
-        GUI(TeensySynth::Synth *tsPointer)
-        {
-            ts = tsPointer;
-        }
+        GUI(TeensySynth::Synth *tsPointer);
 
         enum EventType
         {
@@ -46,35 +43,30 @@ namespace TeensySynth
             obdFill(&obd, 0, 1);
         }
 
-        char * myCallback(int iIndex)
+        char * menuCallback(int iIndex)
         {
             return szOnOff[ucToggle[iIndex]];
         }
 
     private:
         //List of synth engine names
-        /*         const char synthEngineList[16][11] = {
-            "Analog",
-            "Waveshaper",
-            "FM",
-            "Grain",
-            "Additive",
-            "Wavetable",
-            "Chord",
-            "Speech",
-            "Swarm",
-            "Noise",
-            "Particle",
-            "String",
-            "Modal",
-            "Bassdrum",
-            "Snare",
-            "Hihat"};
-
-        const char mainMenuList[3][14] = {
-            "Load preset",
-            "Save preset",
-            "Select engine"}; */
+        char synthEngineList[16][11] = {
+            "ANALOG    ",
+            "WAVESHAPER",
+            "FM        ",
+            "GRAIN     ",
+            "ADDITIVE  ",
+            "WAVETABLE ",
+            "CHORD     ",
+            "SPEECH    ",
+            "SWARM     ",
+            "NOISE     ",
+            "PARTICLE  ",
+            "STRING    ",
+            "MODAL     ",
+            "BASSDRUM  ",
+            "SNARE     ",
+            "HIHAT     "};
 
         char *menu1[4];
 
@@ -87,7 +79,7 @@ namespace TeensySynth
 
         SIMPLEMENU sm;
         OBDISP obd;
-        uint8_t pBuffer[1056]; //display buffer
+        uint8_t pBuffer[1024]; //display buffer
 
         int8_t currentMenuItem = -1;
         

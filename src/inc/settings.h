@@ -2,7 +2,7 @@
 #define SETTINGS_H
 
 // Enable debug messages - 0=off, 1=less, 2=more
-#define SYNTH_DEBUG 0
+#define SYNTH_DEBUG 1
 
 // Amount of polyphony
 #define NVOICES 4

@@ -1,4 +1,5 @@
 //************LIBRARIES USED**************
+#include <Arduino.h>
 #include "inc/settings.h"
 #include "inc/synth.h"
 #include "inc/hardware_controls.h"

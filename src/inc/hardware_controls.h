@@ -20,10 +20,10 @@ namespace TeensySynth
 
         void update()
         {
-            checkControlValues(1);
+            checkControlValues(true);
         }
 
-        void init();        
+        void init();
 
     private:
         //Teensy pins where 16ch multiplexer control pins are connected
@@ -97,8 +97,9 @@ namespace TeensySynth
         int16_t encValue[2];
 
         /* Thresholds for updating parameters from potentiometer readings
-     * The default value is defined in settings.h, but this is also an array 
-     * so that we can change thresholds also individually if there is a single noisy pot */
+         * The default value is defined in settings.h, but this is also an array 
+         * so that we can change thresholds also individually if there is a single noisy pot 
+         */
         uint8_t potThreshold[LAST_CTL];
 
         //Switch multiplexer channel and read a value
@@ -110,13 +111,12 @@ namespace TeensySynth
             return analogRead(muxValuePin);
         }
 
+        //Sends the control changes to the synth engine
         void updateTeensySynth(uint8_t ctl, int value);
 
         void readAndProcessPotentiometers(bool update);
         void readAndProcessEncoders(bool update);
         void checkControlValues(bool update);
-
-
     };
 } // namespace TeensySynth
 

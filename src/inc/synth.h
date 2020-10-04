@@ -63,7 +63,7 @@ namespace TeensySynth
             updateOscillator();
         }
 
-        inline float getSynthEngine()
+        inline uint8_t getSynthEngine()
         {
             return currentPatch.engine;
         }

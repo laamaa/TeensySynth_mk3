@@ -35,7 +35,10 @@ namespace TeensySynth
 #endif
                         currentCtlValue[CTL_ENC_1 + i]++;
                         if (update)
+                        {
                             updateTeensySynth(CTL_ENC_1 + i, currentCtlValue[CTL_ENC_1 + i]);
+                            gui->updateDisplay = true;
+                        }
                     }
                 }
             }
@@ -49,6 +52,9 @@ namespace TeensySynth
                     if (gui->menuIsOpen == true)
                     {
                         gui->menuEvent(i, GUI::EventType::EVENT_PREV);
+#if SYNTH_DEBUG > 1
+                        Serial.println(F("Menu active, EVENT_NEXT"));
+#endif
                     }
                     else
                     {
@@ -57,7 +63,10 @@ namespace TeensySynth
 #endif
                         currentCtlValue[CTL_ENC_1 + i]--;
                         if (update)
+                        {
                             updateTeensySynth(CTL_ENC_1 + i, currentCtlValue[CTL_ENC_1 + i]);
+                            gui->updateDisplay = true;
+                        }
                     }
                 }
             }
@@ -79,7 +88,7 @@ namespace TeensySynth
                 if (update == 1)
                 {
 #if SYNTH_DEBUG > 1
-                    Serial.printf("Pot upd, num: %d, val: %d, currentVal: %d, th: %d\n", i, ctlValue, currentCtlValue[i], potThreshold[i]);
+                    Serial.printf("Pot num: %d, val: %d, cVal: %d, t: %d\n", i, ctlValue, currentCtlValue[i], potThreshold[i]);
 #endif
                     if (ctlValue < currentCtlValue[i] + 50 && ctlValue > currentCtlValue[i] - 50) //prevent pot noise spikes
                     {
