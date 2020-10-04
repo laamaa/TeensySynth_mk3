@@ -9,8 +9,8 @@ namespace TeensySynth
     void Synth::init()
     {
             //Allocate audio memory. Floating point and integer versions need their own blocks.
-            AudioMemory(3);
-            AudioMemory_F32(11);
+            AudioMemory(2); //I2S output objects require 2 blocks of I16 audiomemory
+            AudioMemory_F32(2*NVOICES+3); //Each synth voice requires 2 blocks of F32 audiomemory and the rest of fx chain needs 3 in addition
             delay(500);        
 #if SYNTH_DEBUG > 0
         // Open serial communications and wait for port to open:
@@ -30,17 +30,19 @@ namespace TeensySynth
         }
 
         //Create audio signal path for master & fx
+        fxReverb = new AudioEffectFreeverbStereo_F32();
+
         patchMixOscMixChorus = new AudioConnection_F32(mixOsc, 0, mixChorus, 0);
         patchMixOscFxReverbHighpass = new AudioConnection_F32(mixOsc, 0, fxReverbHighpass, 0);
-        patchFxReverbHighpassFxReverb = new AudioConnection_F32(fxReverbHighpass, fxReverb);
-        patchFxReverbMixChorus = new AudioConnection_F32(fxReverb, 0, mixChorus, 1);
+        patchFxReverbHighpassFxReverb = new AudioConnection_F32(fxReverbHighpass, *fxReverb);
+        patchFxReverbMixChorus = new AudioConnection_F32(*fxReverb, 0, mixChorus, 1);
         patchMixChorusFxchorus = new AudioConnection_F32(mixChorus, fxChorus);
         patchMixOscMixMaster[0] = new AudioConnection_F32(mixOsc, 0, mixMasterL, 0);
         patchMixOscMixMaster[1] = new AudioConnection_F32(mixOsc, 0, mixMasterR, 0);
         patchFxChorusMixMaster[0] = new AudioConnection_F32(fxChorus, 0, mixMasterL, 1);
         patchFxChorusMixMaster[1] = new AudioConnection_F32(fxChorus, 1, mixMasterR, 1);
-        patchFxReverbMixMaster[0] = new AudioConnection_F32(fxReverb, 0, mixMasterL, 2);
-        patchFxReverbMixMaster[1] = new AudioConnection_F32(fxReverb, 1, mixMasterR, 2);
+        patchFxReverbMixMaster[0] = new AudioConnection_F32(*fxReverb, 0, mixMasterL, 2);
+        patchFxReverbMixMaster[1] = new AudioConnection_F32(*fxReverb, 1, mixMasterR, 2);
         patchMixMasterFxFlt[0] = new AudioConnection_F32(mixMasterL, fxFlt[0]);
         patchMixMasterFxFlt[1] = new AudioConnection_F32(mixMasterR, fxFlt[1]);
         patchFxFltConverter[0] = new AudioConnection_F32(fxFlt[0], float2Int1);
@@ -66,8 +68,8 @@ namespace TeensySynth
         mixMasterR.gain(2, 0.1f);             //reverb signal R
 
         fxReverbHighpass.setHighpass(0, REV_HIGHPASS); // Highpass filter before reverb
-        fxReverb.roomsize(0.7f);
-        fxReverb.damping(0.7f);
+        fxReverb->roomsize(0.7f);
+        fxReverb->damping(0.7f);
 
         mixChorus.gain(0, 0.8f);             // Chorus input level
         mixChorus.gain(1, CHORUS_REV_LEVEL); // Reverb -> Chorus level
@@ -125,7 +127,7 @@ namespace TeensySynth
             if (!curOsc && *notesOn != -1)
             {
 #if SYNTH_DEBUG > 0
-                Serial.println("Stealing voice");
+                Serial.println(F("Stealing voice"));
 #endif
                 curOsc = noteOffReal(channel, *notesOn, velocity, true);
             }
@@ -373,7 +375,7 @@ namespace TeensySynth
 
     void Synth::updateChorusAndReverb()
     {
-        fxReverb.roomsize(currentPatch.reverbSize);
+        fxReverb->roomsize(currentPatch.reverbSize);
         mixMasterL.gain(0, MIX_LEVEL - currentPatch.reverbDepth);                              //dry signal L
         mixMasterL.gain(1, currentPatch.chorusDepth * (MIX_LEVEL - currentPatch.reverbDepth)); //chorus signal L
         mixMasterL.gain(2, currentPatch.reverbDepth);                                          //reverb signal L
@@ -388,7 +390,7 @@ namespace TeensySynth
 
     inline void Synth::printResources(float cpu, uint8_t memF32, uint8_t memI16)
     {
-        Serial.printf("CPU Usage: %.2f%%, Memory: %d (F32) %d (I16)\n", cpu, memF32, memI16);
+        Serial.printf("CPU: %.2f%%, Mem: %d F32 %d I16\n", cpu, memF32, memI16);
     }
 
     void Synth::performanceCheck()

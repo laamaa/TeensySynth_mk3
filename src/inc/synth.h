@@ -288,7 +288,7 @@ namespace TeensySynth
         AudioMixer4_F32 amp[NVOICES];
         AudioMixer8_F32 mixOsc;
         AudioFilterBiquad_F32 fxReverbHighpass;
-        AudioEffectFreeverbStereo_F32 fxReverb;
+        AudioEffectFreeverbStereo_F32 *fxReverb; //Reverb is initialized dynamically in order to get the big buffers in RAM2 
         AudioMixer4_F32 mixChorus;
         AudioEffectEnsemble_F32 fxChorus;
         AudioMixer4_F32 mixMasterL;

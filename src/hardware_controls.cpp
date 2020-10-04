@@ -88,7 +88,7 @@ namespace TeensySynth
                 if (update == 1)
                 {
 #if SYNTH_DEBUG > 1
-                    Serial.printf("Pot num: %d, val: %d, cVal: %d, t: %d\n", i, ctlValue, currentCtlValue[i], potThreshold[i]);
+                    Serial.printf("Pot: %d, V: %d, cV: %d, t: %d\n", i, ctlValue, currentCtlValue[i], potThreshold[i]);
 #endif
                     if (ctlValue < currentCtlValue[i] + 50 && ctlValue > currentCtlValue[i] - 50) //prevent pot noise spikes
                     {

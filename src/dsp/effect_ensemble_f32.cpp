@@ -29,7 +29,8 @@
 AudioEffectEnsemble_F32::AudioEffectEnsemble_F32() : AudioStream_F32(1, inputQueueArray_f32)
 {
 	memset(delayBuffer, 0, sizeof(delayBuffer));
-    memset(lfoTable, 0, sizeof(lfoTable));
+    static float DMAMEM dmaLfoTable[ENSEMBLE_BUFFER_SIZE]; //Store the LFO table in the beginning of RAM2
+    lfoTable = dmaLfoTable;
     
     // input index
     inIndex = 0;

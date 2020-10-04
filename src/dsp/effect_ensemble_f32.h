@@ -47,7 +47,7 @@ private:
     float delayBuffer[ENSEMBLE_BUFFER_SIZE];
     
     // LFO wavetable until I resolve progmem issues
-    float lfoTable[LFO_SAMPLES];
+    float *lfoTable;
     
     // input index
     int16_t inIndex;

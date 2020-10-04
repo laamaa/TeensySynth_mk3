@@ -5,7 +5,7 @@
 #define SYNTH_DEBUG 1
 
 // Amount of polyphony
-#define NVOICES 4
+#define NVOICES 6
 
 // Midi channel
 #define SYNTH_MIDICHANNEL 7

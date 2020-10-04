@@ -20,26 +20,7 @@ public:
     }
     ~AudioSynthPlaits_F32() {}
 
-    inline void initPlaits()
-    {
-        BufferAllocator allocator(shared_buffer, 16384);
-        voice.Init(&allocator);
-        patch.engine = 0;
-        patch.note = 48.0f;
-        modulations.note = 0.0f;
-        modulations.engine = 0.0f;
-        modulations.frequency = 0.0f;
-        modulations.note = 0.0f;
-        modulations.harmonics = 0.0f;
-        modulations.morph = 0.0;
-        modulations.level = 0.0f;
-        modulations.trigger = 0.0f;
-        modulations.frequency_patched = false;
-        modulations.timbre_patched = false;
-        modulations.morph_patched = true;
-        modulations.trigger_patched = true;
-        modulations.level_patched = false;
-    }
+    void initPlaits();
 
     enum Parameters
     {
@@ -218,7 +199,7 @@ private:
     Modulations modulations;
     Patch patch;
     Voice voice;
-    char shared_buffer[16384];
+    //char shared_buffer[16384];
 };
 
 #endif
