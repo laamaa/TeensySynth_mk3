@@ -41,7 +41,7 @@ namespace TeensySynth
             if (updateDisplay)
             {
                 obdDrawLine(&obd, 0, 32, 127, 32, 1, 1);
-                obdWriteString(&obd, 0, 0, 0, synthEngineList[ts->getSynthEngine()], FONT_NORMAL, 0, 1);
+                obdWriteString(&obd, 0, 0, 2, synthEngineList[ts->getSynthEngine()], FONT_NORMAL, 0, 1);
                 updateDisplay = false;
             }
         }
@@ -50,12 +50,12 @@ namespace TeensySynth
     void GUI::init()
     {
         //Store menu items
-        menu1[0] = (char *)"* Main menu *";
-        menu1[1] = (char *)"Load Preset";
-        menu1[2] = (char *)"Save Preset";
-        menu1[3] = NULL;
-        szOnOff[0] = (char *)"Off";
-        szOnOff[1] = (char *)"On";
+        menu1[0] = (char *)"";
+        menu1[1] = (char *)"LOAD PRESET";
+        menu1[2] = (char *)"SAVE PRESET";
+        menu1[3] = (char *)"MIDI CHANNEL";
+        menu1[4] = (char *)"SAVE SETTINGS";
+        menu1[5] = NULL;
 
         obdI2CInit(&obd, OLED_128x64, -1, 0, 0, 1, 19, 18, -1, 2000000L);
         obdSetBackBuffer(&obd, pBuffer);
@@ -65,27 +65,72 @@ namespace TeensySynth
 
     void GUI::menuEvent(uint8_t control, TeensySynth::GUI::EventType eventType)
     {
+        menuTimer = 0;
         switch (control)
         {
         case 0:
             switch (eventType)
             {
             case EVENT_NEXT:
-                obdMenuDelta(&sm, 1);
-                //ucToggle[currentMenuItem] = !ucToggle[currentMenuItem];
+                if (setting[currentMenuItem] < 15)
+                    setting[currentMenuItem]++;
                 updateDisplay = true;
                 break;
             case EVENT_PREV:
-                obdMenuDelta(&sm, -1);
-                //ucToggle[currentMenuItem] = !ucToggle[currentMenuItem];
+                if (setting[currentMenuItem] > 0)
+                    setting[currentMenuItem]--;
                 updateDisplay = true;
                 break;
             case EVENT_OK:
+                handleMenuEventOk(0);
+                break;
+            default:
                 break;
             }
             break;
         case 1:
+            switch (eventType)
+            {
+            case EVENT_NEXT:
+                currentMenuItem = obdMenuDelta(&sm, -1);
+                break;
+            case EVENT_PREV:
+                currentMenuItem = obdMenuDelta(&sm, 1);
+                break;
+            case EVENT_OK:
+                handleMenuEventOk(1);
+                break;
+            default:
+                break;
+            }
             break;
+        default:
+            break;
+        }
+    }
+
+    char *GUI::menuCallback(int iIndex)
+    {
+        if (iIndex == 3)
+            return settingValueList[16];
+        else
+            return settingValueList[setting[iIndex]];
+    }
+
+    void GUI::handleMenuEventOk(uint8_t control)
+    {
+        if (control == 0)
+        {
+        }
+        else
+        {
+            if (!menuIsOpen)
+            {
+                obdMenuShow(&sm, -1);
+                currentMenuItem = 0;
+                menuIsOpen = true;
+                updateDisplay = true;
+            }
         }
     }
 

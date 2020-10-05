@@ -14,34 +14,9 @@ namespace TeensySynth
     class Synth
     {
     public:
-        Synth()
-        {
-        }
-        ~Synth()
-        {
-            //Delete dynamically allocated AudioConnections
-            for (int i = 0; i < NVOICES; i++)
-            {
-                delete patchOscAmp[i + NVOICES];
-                delete patchOscAmp[i];
-                delete patchAmpMix[i];
-            }
-            delete patchMixOscMixChorus;
-            delete patchMixOscFxReverbHighpass;
-            delete patchFxReverbHighpassFxReverb;
-            delete patchFxReverbMixChorus;
-            delete patchMixChorusFxchorus;
-            for (int i = 0; i < 2; i++)
-            {
-                delete patchFxReverbMixMaster[i];
-                delete patchMixOscMixMaster[i];
-                delete patchFxChorusMixMaster[i];
-                delete patchMixMasterFxFlt[i];
-                delete patchFxFltConverter[i];
-                delete patchConverterI2s[i];
-            }
-        }
+        ~Synth();
 
+        void createAudioPatch();
         void init();
 
         //Trigger a new voice
@@ -52,9 +27,6 @@ namespace TeensySynth
         {
             noteOffReal(channel, note, velocity, false);
         }
-
-        //MIDI control change message handler
-        void OnControlChange(uint8_t channel, uint8_t control, uint8_t value);
 
         inline void setSynthEngine(int engine)
         {
@@ -204,13 +176,7 @@ namespace TeensySynth
             updateChorusAndReverb();
         }
 
-        inline void resetAll()
-        {
-            updateOscillator();
-            updateOscillatorBalance();
-            updateFilter();
-            updateChorusAndReverb();
-        }
+        void resetAll();
 
         //Set frequency modulation amount. Range 0.0f-1.0f.
         inline void setFreqMod(float freqMod)
@@ -288,7 +254,7 @@ namespace TeensySynth
         AudioMixer4_F32 amp[NVOICES];
         AudioMixer8_F32 mixOsc;
         AudioFilterBiquad_F32 fxReverbHighpass;
-        AudioEffectFreeverbStereo_F32 *fxReverb; //Reverb is initialized dynamically in order to get the big buffers in RAM2 
+        AudioEffectFreeverbStereo_F32 *fxReverb; //Reverb is initialized dynamically in order to get the big buffers in RAM2
         AudioMixer4_F32 mixChorus;
         AudioEffectEnsemble_F32 fxChorus;
         AudioMixer4_F32 mixMasterL;
@@ -393,8 +359,8 @@ namespace TeensySynth
         void updateDecay();
         void updateChorusAndReverb();
         //load patches saved in flash memory, needs a pointer to an array with enough space for all presets (use NUM_PRESETS defined in settings.h)
-        void loadPatchesFromFlash(Patch * patches);
-        void savePatchesToFlash(Patch * patches);        
+        void loadPatchesFromFlash(Patch *patches);
+        void savePatchesToFlash(Patch *patches);
     };
 } // namespace TeensySynth
 #endif

@@ -3,6 +3,7 @@
 
 #include "core_pins.h"
 #include <OneBitDisplay.h>
+#include "settings.h"
 #include "synth.h"
 
 namespace TeensySynth
@@ -20,7 +21,7 @@ namespace TeensySynth
             EVENT_OK,
         };
 
-        void init();        
+        void init();
 
         void update();
 
@@ -34,7 +35,8 @@ namespace TeensySynth
         bool updateDisplay = true;
         bool menuIsOpen = true;
 
-        inline void resetMenuTimer(){
+        inline void resetMenuTimer()
+        {
             menuTimer = 0;
         }
 
@@ -43,10 +45,7 @@ namespace TeensySynth
             obdFill(&obd, 0, 1);
         }
 
-        char * menuCallback(int iIndex)
-        {
-            return szOnOff[ucToggle[iIndex]];
-        }
+        char *menuCallback(int iIndex);
 
     private:
         //List of synth engine names
@@ -68,9 +67,28 @@ namespace TeensySynth
             "SNARE     ",
             "HIHAT     "};
 
-        char *menu1[4];
+        char settingValueList[17][3] = {
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09",
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15",
+            "16",
+            "  "};
 
-        uint8_t ucToggle[3] = {0, 1, 0};
+        char *menu1[6];
+
+        uint8_t setting[4] = {0, 0, 0, 0};
         char *szOnOff[2];
 
         elapsedMillis menuTimer;
@@ -82,7 +100,9 @@ namespace TeensySynth
         uint8_t pBuffer[1024]; //display buffer
 
         int8_t currentMenuItem = -1;
-        
+
+        inline void initMenu();
+        void handleMenuEventOk(uint8_t control);
     };
 
 } // namespace TeensySynth

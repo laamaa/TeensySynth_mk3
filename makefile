@@ -18,7 +18,7 @@ BOARD_ID         := TEENSY40
 MCU              := imxrt1062
 
 LIBS_LOCAL_BASE  := lib
-LIBS_LOCAL       := Audio Encoder SD SerialFlash SPI Wire OpenAudio_ArduinoLibrary OneBitDisplay BitBang_I2C
+LIBS_LOCAL       := Audio Encoder SD SerialFlash SPI Wire OpenAudio_ArduinoLibrary OneBitDisplay BitBang_I2C Bounce2
 
 CORE_BASE        := core
 GCC_BASE         := C:\PROGRA~2\Arduino\hardware\tools\arm\bin
@@ -33,7 +33,8 @@ FLAGS_OPT   := -O2
 FLAGS_COM   := -g -Wall -ffunction-sections -fdata-sections -nostdlib -MMD
 FLAGS_LSP   := 
 
-FLAGS_CPP   := -std=gnu++14 -fno-exceptions -fpermissive -fno-rtti -fno-threadsafe-statics -felide-constructors -Wno-error=narrowing
+#FLAGS_CPP   := -std=gnu++14 -fno-exceptions -fno-rtti -fno-threadsafe-statics -felide-constructors -Wno-error=narrowing
+FLAGS_CPP   := -std=gnu++14 -fno-exceptions -fno-rtti -fno-threadsafe-statics -felide-constructors -Wall
 FLAGS_C     := 
 FLAGS_S     := -x assembler-with-cpp
 FLAGS_LD    := -Wl,--print-memory-usage,--gc-sections,--relax,--defsym=__rtc_localtime=$(shell powershell [int](Get-Date -UFormat +%s)[0]) -T$(CORE_BASE)/imxrt1062.ld
@@ -41,7 +42,7 @@ FLAGS_LD    := -Wl,--print-memory-usage,--gc-sections,--relax,--defsym=__rtc_loc
 LIBS        := -larm_cortexM7lfsp_math -lm -lstdc++
 
 DEFINES     := -D__IMXRT1062__ -DTEENSYDUINO=153 -DARDUINO_TEENSY40 -DARDUINO=10807
-DEFINES     += -DF_CPU=720000000 -DUSB_MIDI -DLAYOUT_FINNISH
+DEFINES     += -DF_CPU=600000000 -DUSB_MIDI -DLAYOUT_FINNISH
 
 CPP_FLAGS   := $(FLAGS_CPU) $(FLAGS_OPT) $(FLAGS_COM) $(DEFINES) $(FLAGS_CPP)
 C_FLAGS     := $(FLAGS_CPU) $(FLAGS_OPT) $(FLAGS_COM) $(DEFINES) $(FLAGS_C)

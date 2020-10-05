@@ -20,7 +20,7 @@
 #define MIX_LEVEL 0.8f
 
 // How much reverb should be sent to chorus. Range = 0.0f - 1.0f
-#define CHORUS_REV_LEVEL 0.4f
+#define CHORUS_REV_LEVEL 0.8f
 
 // Pre-reverb highpass filter frequency. Range = 0.0f >
 #define REV_HIGHPASS 150.0f
@@ -29,7 +29,7 @@
 #define POT_THRESHOLD 6
 
 //Idle timeout in ms for hiding menu
-#define MENU_TIMEOUT 4000
+#define MENU_TIMEOUT 8000
 
 //Constrain macro, borrowed from stmlib
 #define CONSTRAIN(var, min, max) \

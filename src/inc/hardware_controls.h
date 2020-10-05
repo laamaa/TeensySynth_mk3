@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include "synth.h"
 #include <Encoder.h>
+#include <Bounce2.h>
 #include "gui.h"
 
 namespace TeensySynth
@@ -33,7 +34,7 @@ namespace TeensySynth
         const uint8_t muxValuePin = 14;
 
         //Teensy pins where rotary encoders are connected. First two in array are the encoder pins, 3. is the encoder push button
-        const uint8_t rotaryPin[2][3] = {{8, 9, 10}, {11, 12, 14}};
+        const uint8_t rotaryPin[2][3] = {{8, 9, 10}, {11, 12, 15}};
 
         //HW control layout enum: potentiometers first (left to right, top to bottom), encoders second and switches last
         enum HwControl
@@ -89,6 +90,9 @@ namespace TeensySynth
 
         //We use Teensy's encoder library to make working with the encoders easier
         Encoder *encoder[2];
+
+        //Create bounce library instances for handling button presses
+        Bounce button[2] = {Bounce()};
 
         //Current pot/switch readings
         int16_t currentCtlValue[LAST_CTL];

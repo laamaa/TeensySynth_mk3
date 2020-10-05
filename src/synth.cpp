@@ -4,20 +4,35 @@
 
 namespace TeensySynth
 {
-
-    //Inititializes audio signal path and default values for its components
-    void Synth::init()
+    Synth::~Synth()
     {
-            //Allocate audio memory. Floating point and integer versions need their own blocks.
-            AudioMemory(2); //I2S output objects require 2 blocks of I16 audiomemory
-            AudioMemory_F32(2*NVOICES+3); //Each synth voice requires 2 blocks of F32 audiomemory and the rest of fx chain needs 3 in addition
-            delay(500);        
-#if SYNTH_DEBUG > 0
-        // Open serial communications and wait for port to open:
-        Serial.begin(115200);
-        delay(1000);
-#endif
+        //Delete dynamically allocated AudioConnections
+        for (int i = 0; i < NVOICES; i++)
+        {
+            delete patchOscAmp[i + NVOICES];
+            delete patchOscAmp[i];
+            delete patchAmpMix[i];
+        }
+        delete patchMixOscMixChorus;
+        delete patchMixOscFxReverbHighpass;
+        delete patchFxReverbHighpassFxReverb;
+        delete patchFxReverbMixChorus;
+        delete patchMixChorusFxchorus;
+        for (int i = 0; i < 2; i++)
+        {
+            delete patchFxReverbMixMaster[i];
+            delete patchMixOscMixMaster[i];
+            delete patchFxChorusMixMaster[i];
+            delete patchMixMasterFxFlt[i];
+            delete patchFxFltConverter[i];
+            delete patchConverterI2s[i];
+        }
+        //delete fxReverb;
+    }
 
+    //Create patch for Teensy audio library components
+    void Synth::createAudioPatch()
+    {
         for (int i = 0; i < NVOICES; i++)
         {
             //Store pointers for oscillator components
@@ -49,31 +64,23 @@ namespace TeensySynth
         patchFxFltConverter[1] = new AudioConnection_F32(fxFlt[1], float2Int2);
         patchConverterI2s[0] = new AudioConnection(float2Int1, 0, i2s1, 0);
         patchConverterI2s[1] = new AudioConnection(float2Int2, 0, i2s1, 1);
+    }
 
-        //Initialize default values for signal path components
-        {
-            Oscillator *o = oscs, *end = oscs + NVOICES;
-            do
-            {
-                o->amp->gain(0, OSC_LEVEL);
-                o->amp->gain(1, 0.0f);
-            } while (++o < end);
-        }
+    //Inititializes audio signal path and default values for its components
+    void Synth::init()
+    {
+        //Allocate audio memory. Floating point and integer versions need their own blocks.
+        AudioMemory(2);                   //I2S output objects require 2 blocks of I16 audiomemory
+        AudioMemory_F32(2 * NVOICES + 3); //Each synth voice requires 2 blocks of F32 audiomemory and the rest of fx chain needs 3 in addition
+        delay(500);
 
-        mixMasterL.gain(0, MIX_LEVEL - 0.1f); //dry signal L
-        mixMasterL.gain(1, MIX_LEVEL - 0.1f); //chorus signal L
-        mixMasterL.gain(2, 0.1f);             //reverb signal L
-        mixMasterR.gain(0, MIX_LEVEL - 0.1f); //dry signal R
-        mixMasterR.gain(1, MIX_LEVEL - 0.1f); //chorus signal R
-        mixMasterR.gain(2, 0.1f);             //reverb signal R
+#if SYNTH_DEBUG > 0
+        // Open serial communications and wait for port to open:
+        Serial.begin(115200);
+        delay(1000);
+#endif
 
-        fxReverbHighpass.setHighpass(0, REV_HIGHPASS); // Highpass filter before reverb
-        fxReverb->roomsize(0.7f);
-        fxReverb->damping(0.7f);
-
-        mixChorus.gain(0, 0.8f);             // Chorus input level
-        mixChorus.gain(1, CHORUS_REV_LEVEL); // Reverb -> Chorus level
-
+        createAudioPatch();
         resetAll();
     }
 
@@ -313,20 +320,6 @@ namespace TeensySynth
         notesReset(notesOn);
     }
 
-    void Synth::OnControlChange(uint8_t channel, uint8_t control, uint8_t value)
-    {
-        if (!omniOn && channel != SYNTH_MIDICHANNEL)
-            return;
-
-        switch (control)
-        {
-        case 0: // bank select, do nothing (switch sounds via program change only)
-            break;
-        default:
-            break;
-        };
-    }
-
     void Synth::updateFilter()
     {
         for (int i = 0; i < 2; i++)
@@ -385,6 +378,38 @@ namespace TeensySynth
         mixChorus.gain(1, CHORUS_REV_LEVEL * currentPatch.reverbDepth);                        //Reverb -> Chorus level
     }
 
+    void Synth::resetAll()
+    {
+        //Initialize default values for signal path components
+        {
+            Oscillator *o = oscs, *end = oscs + NVOICES;
+            do
+            {
+                o->amp->gain(0, OSC_LEVEL);
+                o->amp->gain(1, 0.0f);
+            } while (++o < end);
+        }
+
+        mixMasterL.gain(0, MIX_LEVEL - 0.1f); //dry signal L
+        mixMasterL.gain(1, MIX_LEVEL - 0.1f); //chorus signal L
+        mixMasterL.gain(2, 0.1f);             //reverb signal L
+        mixMasterR.gain(0, MIX_LEVEL - 0.1f); //dry signal R
+        mixMasterR.gain(1, MIX_LEVEL - 0.1f); //chorus signal R
+        mixMasterR.gain(2, 0.1f);             //reverb signal R
+
+        fxReverbHighpass.setHighpass(0, REV_HIGHPASS); // Highpass filter before reverb
+        fxReverb->roomsize(0.7f);
+        fxReverb->damping(0.7f);
+
+        mixChorus.gain(0, 0.8f);             // Chorus input level
+        mixChorus.gain(1, CHORUS_REV_LEVEL); // Reverb -> Chorus level
+
+        updateOscillator();
+        updateOscillatorBalance();
+        updateFilter();
+        updateChorusAndReverb();
+    }
+
 // Debug functions
 #if SYNTH_DEBUG > 0
 
@@ -400,14 +425,14 @@ namespace TeensySynth
         if ((now - last) > 1000)
         {
             last = now;
-            //float cpu = AudioProcessorUsageMax();
+            float cpu = AudioProcessorUsageMax();
             uint8_t memI16 = AudioMemoryUsageMax();
             uint8_t memF32 = AudioMemoryUsageMax_F32();
-            if ((statsMemF32 != memF32) || (statsMemI16 != memI16) /*|| fabs(statsCpu - cpu) > 1 */)
+            if ((statsMemF32 != memF32) || (statsMemI16 != memI16) || fabs(statsCpu - cpu) > 1)
             {
-                printResources(0, memF32, memI16);
+                printResources(cpu, memF32, memI16);
             }
-            //AudioProcessorUsageMaxReset();
+            AudioProcessorUsageMaxReset();
             AudioMemoryUsageMaxReset();
             AudioMemoryUsageMaxReset_F32();
             last = now;

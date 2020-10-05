@@ -9,18 +9,28 @@ namespace TeensySynth
     void HardwareControls::readAndProcessEncoders(bool update)
     {
         int i, ctlValue;
+
         for (i = 0; i < 2; i++)
         {
+            //Read encoder button presses
+            button[i].update();
+            if (button[i].rose())
+            {
+                gui->menuEvent(i, GUI::EventType::EVENT_OK);
+            }
+
             //Read the current encoder turning direction
             ctlValue = encoder[i]->readAndReset();
+            //The crappy encoders that I bought from Aliexpress seem to be like 1 click = 4 value increments.. trying to work around that
             if (ctlValue < 0)
-            {
-                //The crappy encoders that I bought from Aliexpress seem to be like 1 click = 4 increments.. trying to work around that
+            {                             
+                //If the encoder has switched directions before reaching 4 value increments, reset the value
                 if (encValue[i] < 0)
                     encValue[i] = 0;
                 encValue[i]++;
                 if (encValue[i] % 4 == 0)
                 {
+                    //If menu is open in the GUI, send an event to the GUI object. Otherwise send the message to synth object.
                     if (gui->menuIsOpen == true)
                     {
                         gui->menuEvent(i, GUI::EventType::EVENT_NEXT);
@@ -188,6 +198,12 @@ namespace TeensySynth
     {
         encoder[0] = new Encoder(rotaryPin[0][0], rotaryPin[0][1]);
         encoder[1] = new Encoder(rotaryPin[1][0], rotaryPin[1][1]);
+
+        //Setup button pins for bounce library
+        button[0].attach(rotaryPin[0][2], INPUT);
+        button[1].attach(rotaryPin[1][2], INPUT);
+        button[0].interval(100);
+        button[1].interval(100);
 
         //Set 16ch multiplexer control pins to mode OUTPUT
         for (uint8_t i = 0; i < 4; i++)

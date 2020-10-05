@@ -29,21 +29,19 @@
 AudioEffectEnsemble_F32::AudioEffectEnsemble_F32() : AudioStream_F32(1, inputQueueArray_f32)
 {
 	memset(delayBuffer, 0, sizeof(delayBuffer));
-    static float DMAMEM dmaLfoTable[ENSEMBLE_BUFFER_SIZE]; //Store the LFO table in the beginning of RAM2
-    lfoTable = dmaLfoTable;
     
     // input index
     inIndex = 0;
     // output indexes
     // default to center of buffer
-    outIndex1 = 512;
-    outIndex2 = 512;
-    outIndex3 = 512;
+    outIndex1 = ENSEMBLE_BUFFER_SIZE/2;
+    outIndex2 = ENSEMBLE_BUFFER_SIZE/2;
+    outIndex3 = ENSEMBLE_BUFFER_SIZE/2;
     // lfo index
     // seprated by thirds to approximate 120 degree phase relationship
     lfoIndex1 = 0;
-    lfoIndex2 = 245;
-    lfoIndex3 = 490;
+    lfoIndex2 = LFO_SIZE/6;
+    lfoIndex3 = LFO_SIZE/3;
 
     // lfo rate counter
     lfoCount = 0;
@@ -59,7 +57,7 @@ AudioEffectEnsemble_F32::AudioEffectEnsemble_F32() : AudioStream_F32(1, inputQue
     offsetIndex3B = 0;
     
     // generate the LFO wavetable
-    for (iC = 0; iC < LFO_SAMPLES; iC++)
+    for (uint16_t iC = 0; iC < LFO_SAMPLES; iC++)
     {
         lfoTable[iC] = ((sin(((2.0 * M_PI)/LFO_SAMPLES) * iC) * LFO_RANGE) / 2.0) + (((sin(((20.0 * M_PI)/LFO_SAMPLES) * iC)) * LFO_RANGE) / 3.0);
     }
