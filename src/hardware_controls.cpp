@@ -124,7 +124,7 @@ namespace TeensySynth
         {
         case CTL_ENC_1:
             //Enc1 = set synth engine
-            CONSTRAIN(currentCtlValue[CTL_ENC_1], 0, 16); //16 is the number of synth engines available
+            CONSTRAIN(currentCtlValue[CTL_ENC_1], 0, 15); //16 is the number of synth engines available
             ts->setSynthEngine(currentCtlValue[CTL_ENC_1]);
             break;
         case CTL_ENC_2:

@@ -14,6 +14,13 @@ namespace TeensySynth
     public:
         GUI(TeensySynth::Synth *tsPointer);
 
+        //Does the display need to be refreshed?
+        bool updateDisplay = true;
+
+        //Should the main menu be visible?
+        bool menuIsOpen = false;
+
+        //Menu event codes
         enum EventType
         {
             EVENT_NEXT,
@@ -21,30 +28,34 @@ namespace TeensySynth
             EVENT_OK,
         };
 
+        //Initialize OneBitDisplay library
         void init();
 
+        //Main GUI update loop
         void update();
 
+        //Menu event handler. Takes a controller number and type of event as parameter
         void menuEvent(uint8_t control, EventType eventType);
 
-        void drawPixel(uint8_t x, uint8_t y, uint8_t color)
+        //Wrapper for drawing a pixel on the screen
+        inline void drawPixel(uint8_t x, uint8_t y, uint8_t color)
         {
             obdSetPixel(&obd, x, y, color, 1);
         }
 
-        bool updateDisplay = true;
-        bool menuIsOpen = true;
-
+        //Resets the timer that's used to calculate when to hide the menu
         inline void resetMenuTimer()
         {
             menuTimer = 0;
         }
 
-        void clearDisplay()
+        //Draws a big box so we won't see a thing
+        inline void clearDisplay()
         {
             obdFill(&obd, 0, 1);
         }
 
+        //Callback function for showing values in the main menu
         char *menuCallback(int iIndex);
 
     private:
@@ -67,7 +78,8 @@ namespace TeensySynth
             "SNARE     ",
             "HIHAT     "};
 
-        char settingValueList[17][3] = {
+        //Table for converting int to char*
+        char charNumbers[17][3] = {
             "01",
             "02",
             "03",
@@ -86,22 +98,30 @@ namespace TeensySynth
             "16",
             "  "};
 
+        //Main menu table
         char *menu1[6];
 
+        //Current values in main menu items
         uint8_t setting[4] = {0, 0, 0, 0};
-        char *szOnOff[2];
 
+        //Time since last menu action in ms
         elapsedMillis menuTimer;
 
+        //Pointer to main synth object
         Synth *ts;
 
+        //Objects needed by OneBitDisplay library
         SIMPLEMENU sm;
         OBDISP obd;
         uint8_t pBuffer[1024]; //display buffer
 
+        //Currently selected menu item
         int8_t currentMenuItem = -1;
 
-        inline void initMenu();
+        //Should the main menu be initialized when opening?
+        bool menuIsInitialized = false;
+
+        //Handle OK (enter) menu events. Takes a controller number as parameter.
         void handleMenuEventOk(uint8_t control);
     };
 

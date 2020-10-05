@@ -40,7 +40,7 @@ namespace TeensySynth
             return currentPatch.engine;
         }
 
-        //Set lowpass filter cutoff frequency in Hz. Affects all oscillators. Range: 20.0f - 19200.0f (on 48kHz sample rate)
+        // Set lowpass filter cutoff frequency in Hz. Affects all oscillators. Range: 20.0f - 19200.0f (on 48kHz sample rate)
         inline void setFilterCutoff(float cutoff)
         {
             CONSTRAIN(cutoff, 20.0f, filterMaxFreq);
@@ -53,7 +53,7 @@ namespace TeensySynth
             return currentPatch.filterCutoff;
         }
 
-        //Set lowpass filter resonance (Q value). Affects all oscillators. Range: 0.7f - 5.0f
+        // Set lowpass filter resonance (Q value). Affects all oscillators. Range: 0.7f - 5.0f
         inline void setFilterResonance(float resonance)
         {
             CONSTRAIN(resonance, 0.1f, 10.0f);
@@ -66,7 +66,7 @@ namespace TeensySynth
             return currentPatch.filterResonance;
         }
 
-        //Set lowpass filter overdrive amount. Affects all oscillators. Range: 0.1f - 10.0f
+        // Set lowpass filter overdrive amount. Affects all oscillators. Range: 0.1f - 10.0f
         inline void setFilterDrive(float drive)
         {
             CONSTRAIN(drive, 0.1f, 10.0f);
@@ -79,7 +79,7 @@ namespace TeensySynth
             return currentPatch.filterDrive;
         }
 
-        //Set oscillator parameter "harmonics". Affects all oscillators.
+        // Set oscillator parameter "harmonics". Affects all oscillators.
         inline void setOscillatorHarmonics(float harmonics)
         {
             CONSTRAIN(harmonics, 0.0f, 1.0f);
@@ -92,7 +92,7 @@ namespace TeensySynth
             return currentPatch.harmonics;
         }
 
-        //Set oscillator parameter "timbre". Affects all oscillators.
+        // Set oscillator parameter "timbre". Affects all oscillators.
         inline void setOscillatorTimbre(float timbre)
         {
             CONSTRAIN(timbre, 0.0f, 1.0f);
@@ -105,7 +105,7 @@ namespace TeensySynth
             return currentPatch.timbre;
         }
 
-        //Set oscillator parameter "morph". Affects all oscillators.
+        // Set oscillator parameter "morph". Affects all oscillators.
         inline void setOscillatorMorph(float morph)
         {
             CONSTRAIN(morph, 0.0f, 1.0f);
@@ -118,6 +118,7 @@ namespace TeensySynth
             return currentPatch.morph;
         }
 
+        // Set the balance between main and aux signals that the oscillators produce
         inline void setOscillatorBalance(float balance)
         {
             CONSTRAIN(balance, 0.0f, 1.0f);
@@ -239,6 +240,16 @@ namespace TeensySynth
             return float2Int2;
         }
 
+        uint8_t getActivePresetNumber()
+        {
+            return activePresetNumber;
+        }
+
+        char *getActivePresetName()
+        {
+            return currentPatch.presetName;
+        }
+
 #if SYNTH_DEBUG > 0
         float statsCpu = 0;
         uint8_t statsMemI16 = 0;
@@ -297,27 +308,28 @@ namespace TeensySynth
 
         struct Patch
         {
-            int engine = 0; // Plaits synth engine number
-            float harmonics = 0.0f;
-            float timbre = 0.0f;
-            float morph = 0.0f;   // Plaits oscillator morph parameter
-            float balance = 0.0f; // Balance between main/aux outputs of the Plaits oscillator. 0.0f = main only, 1.0f = aux only
-            float decay = 1.0f;   // Plaits oscillator decay value
-            float level = 1.0f;
-            float lpgColour = 0.0f;
-            float freqMod = 0.0f;
-            float timbreMod = 0.0f;
-            float morphMod = 0.0f;
-            float filterCutoff = 19200.0f;
-            float filterResonance = 1.0f;
-            float filterDrive = 1.0f;
-            bool portamentoOn = false;
-            uint16_t portamentoTime = 200;
-            bool velocityOn = false; //velocity enabled
-            bool polyOn = true;      //polyphonic mode on
-            float reverbSize = 0.7f;
-            float reverbDepth = 0.1f;
-            float chorusDepth = MIX_LEVEL;
+            char presetName[12] = "Init";  // Title of the preset
+            int engine = 0;                // Plaits synth engine number
+            float harmonics = 0.0f;        // Plaits oscillator harmonics parameter
+            float timbre = 0.0f;           // Plaits oscillator timbre parameter
+            float morph = 0.0f;            // Plaits oscillator morph parameter
+            float balance = 0.0f;          // Balance between main/aux outputs of the Plaits oscillator. 0.0f = main only, 1.0f = aux only
+            float decay = 1.0f;            // Plaits oscillator decay value
+            float level = 1.0f;            // Patch volume
+            float lpgColour = 0.0f;        // Plaits oscillator Low Pass colour parameter
+            float freqMod = 0.0f;          // Plaits oscillator freq modulation
+            float timbreMod = 0.0f;        // Plaits oscillator timbre modulation
+            float morphMod = 0.0f;         // Plaits oscillator morph modulation
+            float filterCutoff = 19200.0f; // Master filter cutoff in Hz
+            float filterResonance = 1.0f;  // Master filter resonance
+            float filterDrive = 1.0f;      // Master filter drive
+            bool portamentoOn = false;     // Is portamento enabled (this might get removed)
+            uint16_t portamentoTime = 200; // Portamento time
+            bool velocityOn = false;       // velocity enabled
+            bool polyOn = true;            // polyphonic mode on
+            float reverbSize = 0.7f;       // Master reverb room size
+            float reverbDepth = 0.1f;      // Master reverb amount
+            float chorusDepth = MIX_LEVEL; // Master chorus amount
         };
 
         //These are used to store active notes
@@ -341,7 +353,9 @@ namespace TeensySynth
         float portamentoStep;
         float portamentoPos;
         bool sustainPressed;
+        uint8_t activePresetNumber;
 
+        // Maximum filter frequency, let's keep it a little below Nyquist frequency
         const float filterMaxFreq = AUDIO_SAMPLE_RATE_EXACT / 2.5;
 
         inline void initOscillators();

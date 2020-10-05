@@ -42,6 +42,8 @@ namespace TeensySynth
             {
                 obdDrawLine(&obd, 0, 32, 127, 32, 1, 1);
                 obdWriteString(&obd, 0, 0, 2, synthEngineList[ts->getSynthEngine()], FONT_NORMAL, 0, 1);
+                obdWriteString(&obd, 0, 0, 5, charNumbers[ts->getActivePresetNumber()], FONT_NORMAL, 0, 1);
+                obdWriteString(&obd, 0, 25, 5, ts->getActivePresetName(), FONT_NORMAL, 0, 1);
                 updateDisplay = false;
             }
         }
@@ -59,8 +61,17 @@ namespace TeensySynth
 
         obdI2CInit(&obd, OLED_128x64, -1, 0, 0, 1, 19, 18, -1, 2000000L);
         obdSetBackBuffer(&obd, pBuffer);
-        obdMenuInit(&obd, &sm, menu1, FONT_NORMAL, 0, -1, -1, -1, -1, false);
-        obdMenuSetCallback(&sm, GlobalMenuCallback);
+        if (menuIsOpen && !menuIsInitialized)
+        {
+            //If menu should be open on GUI initialization, check if the menu system is initialized first
+            obdMenuInit(&obd, &sm, menu1, FONT_NORMAL, 0, -1, -1, -1, -1, false);
+            obdMenuSetCallback(&sm, GlobalMenuCallback);
+        }
+        else
+        {
+            //Otherwise just clear the display and go to normal operation
+            clearDisplay();
+        }
     }
 
     void GUI::menuEvent(uint8_t control, TeensySynth::GUI::EventType eventType)
@@ -112,20 +123,36 @@ namespace TeensySynth
     char *GUI::menuCallback(int iIndex)
     {
         if (iIndex == 3)
-            return settingValueList[16];
+            return charNumbers[16];
         else
-            return settingValueList[setting[iIndex]];
+            return charNumbers[setting[iIndex]];
     }
 
     void GUI::handleMenuEventOk(uint8_t control)
     {
         if (control == 0)
         {
+            if (menuIsOpen)
+            {
+                if (currentMenuItem == 0)
+                {
+                    Serial.printf("Load preset %d", setting[currentMenuItem]);
+                }
+                if (currentMenuItem == 1)
+                {
+                    Serial.printf("Save preset %d", setting[currentMenuItem]);
+                }
+            }
         }
         else
         {
             if (!menuIsOpen)
             {
+                if (!menuIsInitialized)
+                {
+                    obdMenuInit(&obd, &sm, menu1, FONT_NORMAL, 0, -1, -1, -1, -1, false);
+                    obdMenuSetCallback(&sm, GlobalMenuCallback);
+                }
                 obdMenuShow(&sm, -1);
                 currentMenuItem = 0;
                 menuIsOpen = true;
