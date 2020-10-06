@@ -98,40 +98,33 @@ namespace TeensySynth
             "16",
             "  "};
 
-        enum MenuItem
-        {
-            MENU_ITEM_LOAD_PRESET,
-            MENU_ITEM_SAVE_PRESET,
-            MENU_ITEM_SET_MIDI_CHANNEL
-        };
-
-        //Main menu table
+        // Main menu table
         char *menu1[6];
 
-        //Current values in main menu items
+        // Current values in main menu items
         uint8_t setting[4] = {0, 0, 0, 0};
 
-        //Time since last menu action in ms
+        // Time since last menu action in ms
         elapsedMillis menuTimer;
 
-        //Pointer to main synth object
+        // Pointer to main synth object
         Synth *ts;
 
-        //Pointer to synth main settings object
+        // Pointer to settings object 
         Settings *settings;
 
-        //Objects needed by OneBitDisplay library
+        // Objects needed by OneBitDisplay library
         SIMPLEMENU sm;
         OBDISP obd;
         uint8_t pBuffer[1024]; //display buffer
 
-        //Currently selected menu item
+        // Currently selected menu item
         int8_t currentMenuItem = -1;
 
-        //Should the main menu be initialized when opening?
+        // Should the main menu be initialized when opening?
         bool menuIsInitialized = false;
 
-        //Handle OK (enter) menu events. Takes a controller number as parameter.
+        // Handle OK (enter) menu events. Takes a controller number as parameter.
         void handleMenuEventOk(uint8_t control);
     };
 

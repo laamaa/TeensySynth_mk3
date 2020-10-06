@@ -9,11 +9,11 @@ namespace TeensySynth
 // Enable debug messages - 0=off, 1=less, 2=more
 #define SYNTH_DEBUG 1
 
+// Should the flash memory be initialized even though it looks ok
+#define FORCE_INITIALIZE_FLASH 0
+
 // Amount of polyphony
 #define NVOICES 6
-
-// Default midi channel
-#define SYNTH_MIDICHANNEL 7
 
 // Number of presets
 #define PRESETS 16
@@ -27,10 +27,10 @@ namespace TeensySynth
 // Initial potentiometer update threshold value, to prevent noise from triggering parameter updates
 #define POT_THRESHOLD 6
 
-//Idle timeout in ms for hiding menu
+// Idle timeout in ms for hiding menu
 #define MENU_TIMEOUT 8000
 
-//Constrain macro, borrowed from stmlib
+// Constrain macro, borrowed from stmlib
 #define CONSTRAIN(var, min, max) \
   if (var < (min))               \
   {                              \
@@ -47,7 +47,7 @@ namespace TeensySynth
   public:
     inline void setMidiChannel(uint8_t newMidiChannel)
     {
-      CONSTRAIN(newMidiChannel, 0, 15);
+      CONSTRAIN(newMidiChannel, 1, 16);
       midiChannel = newMidiChannel;
     }
 

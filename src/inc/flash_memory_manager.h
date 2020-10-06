@@ -10,20 +10,25 @@ namespace TeensySynth
     class FlashMemoryManager
     {
     public:
-        //load patches saved in flash memory, needs a pointer to an array with enough space for all presets (use NUM_PRESETS defined in settings.h)
-        void loadPatchesFromFlash(Patch *ptrPatches);
-        void savePatchesToFlash(Patch *ptrPatches);
-        
+        // Load patches & settings saved in flash memory, takes a pointer to an array with enough space for all presets/settings
+        void loadPatchesFromFlash(Patch (*ptrPatches)[PRESETS]);
+        void loadSettingsFromFlash(Settings *ptrSettings);
+
+        // Save patches/settings to flash memory
+        void savePatchesToFlash(Patch (*ptrPatches)[PRESETS]);
+        void saveSettingsToFlash(Settings *ptrSettings);
+
+        // Checks if flash contains older data version. Returns true if it's ok to load, false if data version differs
+        bool checkFlash();
+
+        // Initialize with default data
+        void initializeFlash();
 
     private:
-        //Constant for checking if the flash contents match what we're expecting
-        const uint16_t memVersion = sizeof(Patch) * PRESETS + sizeof(Settings);
-
-        //Offset for reading settings from the flash (stored after patches)
-        const uint16_t settingsOffset = sizeof(Patch) * PRESETS;      
+  
         
         //Checks if the memVersion in flash matches the one we just calculated. Returns true if the values match, false if the values differ.
-        bool checkFlash();
+        
     };
 
 } // namespace TeensySynth

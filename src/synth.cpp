@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "inc/synth.h"
 #include "inc/settings.h"
+#include <EEPROM.h>
 
 namespace TeensySynth
 {
@@ -65,6 +66,30 @@ namespace TeensySynth
         patchConverterI2s[1] = new AudioConnection(float2Int2, 0, i2s1, 1);
     }
 
+    bool Synth::checkFlash()
+    {
+        uint16_t memVersionFlash;
+
+#if SYNTH_DEBUG > 0
+        Serial.print("Checking flash data version: ");
+#endif
+
+        EEPROM.get(0, memVersionFlash);
+
+#if SYNTH_DEBUG > 0
+        Serial.println(memVersionFlash);
+#endif
+
+        if (memVersionFlash == memVersion)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }    
+
     void Synth::init()
     {
         //Allocate audio memory. Floating point and integer versions need their own blocks.
@@ -80,7 +105,19 @@ namespace TeensySynth
 
         createAudioPatch();
         resetAll();
-        Serial.println(sizeof(Patch) * PRESETS + sizeof(Settings));
+
+        // Check flash data version and load settings / presets if ok
+        if (FORCE_INITIALIZE_FLASH == 0 && checkFlash() == true)
+        {
+            EEPROM.get(sizeof(uint16_t), preset);
+            loadPreset(0);
+        }
+        else
+        {
+            EEPROM.put(0, memVersion);
+            EEPROM.put(sizeof(int16_t), preset);
+            EEPROM.put(settingsOffset, settings);
+        }
     }
 
     void Synth::loadPreset(uint8_t newPreset)
@@ -88,6 +125,7 @@ namespace TeensySynth
         CONSTRAIN(newPreset, 0, PRESETS - 1);
         currentPatch = preset[newPreset];
         activePresetNumber = newPreset;
+        updateAll();
     }
 
     void Synth::savePreset(uint8_t newPreset)
@@ -95,6 +133,8 @@ namespace TeensySynth
         CONSTRAIN(newPreset, 0, PRESETS - 1);
         preset[newPreset] = currentPatch;
         activePresetNumber = newPreset;
+        //flashMan.savePatchesToFlash(&preset);
+        EEPROM.put(sizeof(int16_t), preset);
     }
 
     //Handles MIDI note on events
@@ -290,12 +330,12 @@ namespace TeensySynth
     void Synth::oscOn(Oscillator &osc, int8_t note, uint8_t velocity)
     {
         float v = currentPatch.velocityOn ? velocity / 127. : 1;
-        CONSTRAIN(v,0.8f,1.0f);
+        CONSTRAIN(v, 0.8f, 1.0f);
         if (osc.note != note)
         {
             osc.wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::note, note);
             osc.wf->setModulationsParameter(AudioSynthPlaits_F32::Parameters::trigger, 1.0f);
-            osc.wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::decay, currentPatch.decay*v);
+            osc.wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::decay, currentPatch.decay * v);
             notesAdd(notesOn, note);
             // osc.amp->gain(GAIN_OSC * v);
             osc.velocity = velocity;
@@ -382,6 +422,15 @@ namespace TeensySynth
         mixChorus.gain(1, settings->getChorusReverbLevel() * currentPatch.reverbDepth);        //Reverb -> Chorus level
     }
 
+    void Synth::updateAll()
+    {
+        updateOscillator();
+        updateDecay();
+        updateOscillatorBalance();
+        updateFilter();
+        updateChorusAndReverb();
+    }
+
     void Synth::resetAll()
     {
         //Initialize default values for signal path components
@@ -405,13 +454,10 @@ namespace TeensySynth
         fxReverb->roomsize(0.7f);
         fxReverb->damping(0.7f);
 
-        mixChorus.gain(0, 0.8f);             // Chorus input level
+        mixChorus.gain(0, 0.8f);                             // Chorus input level
         mixChorus.gain(1, settings->getChorusReverbLevel()); // Reverb -> Chorus level
 
-        updateOscillator();
-        updateOscillatorBalance();
-        updateFilter();
-        updateChorusAndReverb();
+        updateAll();
     }
 
 // Debug functions
@@ -450,16 +496,22 @@ namespace TeensySynth
     {
         switch (c)
         {
-        case '\r':
+        case 'l':
             Serial.println();
             break;
         case 's':
             // print cpu and mem usage
             Synth::printResources(statsCpu, statsMemF32, statsMemI16);
             break;
-        case '\t':
+        case 'r':
             // reboot Teensy
             *(uint32_t *)0xE000ED0C = 0x5FA0004;
+            break;
+        case 'i':
+            //initialize flash memory
+            EEPROM.put(0, memVersion);
+            EEPROM.put(sizeof(int16_t), preset);
+            EEPROM.put(settingsOffset, settings);            
             break;
         default:
             break;

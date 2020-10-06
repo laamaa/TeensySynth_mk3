@@ -346,6 +346,12 @@ namespace TeensySynth
         // Allocate memory for storing presets
         Patch preset[PRESETS];
 
+        //Constant for checking if the flash contents match what we're expecting
+        const uint16_t memVersion = sizeof(Patch) * PRESETS + sizeof(Settings);
+
+        //Offset for reading settings from the flash (stored after memory version and patches)
+        const uint16_t settingsOffset = sizeof(uint16_t) + sizeof(Patch) * PRESETS;    
+
         //Variables related to momentary information
         int8_t portamentoDir;
         float portamentoStep;
@@ -370,6 +376,8 @@ namespace TeensySynth
         void updateOscillatorBalance();
         void updateDecay();
         void updateChorusAndReverb();
+        void updateAll();
+        bool checkFlash();
     };
 } // namespace TeensySynth
 #endif

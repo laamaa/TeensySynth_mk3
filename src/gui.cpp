@@ -1,6 +1,5 @@
 #include "inc/gui.h"
 
-// Pointer to the current GUI instance, needed by the global menu callback function
 TeensySynth::GUI *ptrGui;
 
 /*
@@ -33,7 +32,6 @@ namespace TeensySynth
             }
             if (menuTimer > MENU_TIMEOUT)
             {
-                // If the menu timeout limit defined in settings.h has passed, hide the menu
                 menuIsOpen = false;
                 clearDisplay();
                 updateDisplay = true;
@@ -41,7 +39,6 @@ namespace TeensySynth
         }
         else
         {
-            // Menu is not open, draw the "normal" info screen
             if (updateDisplay)
             {
                 obdDrawLine(&obd, 0, 32, 127, 32, 1, 1);
@@ -55,30 +52,27 @@ namespace TeensySynth
 
     void GUI::init()
     {
-        // Initialize menu item table
+        //Store menu items
         menu1[0] = (char *)"";
-        menu1[1] = (char *)"LOAD PRESET    ";
-        menu1[2] = (char *)"SAVE PRESET    ";
-        menu1[3] = (char *)"MIDI CHANNEL   ";
-        menu1[4] = (char *)"SAVE TO FLASH  ";
+        menu1[1] = (char *)"LOAD PRESET  ";
+        menu1[2] = (char *)"SAVE PRESET  ";
+        menu1[3] = (char *)"MIDI CHANNEL ";
+        menu1[4] = (char *)"SAVE TO FLASH";
         menu1[5] = NULL;
 
-        //Initialize values for main menu settings
-        setting[MENU_ITEM_SET_MIDI_CHANNEL] = settings->getMidiChannel(); 
+        setting[2] = settings->getMidiChannel();
 
-        //Initialize OneBitDisplay library via I2C and inform it that there's a buffer available in the microcontroller
         obdI2CInit(&obd, OLED_128x64, -1, 0, 0, 1, 19, 18, -1, 2000000L);
         obdSetBackBuffer(&obd, pBuffer);
-
         if (menuIsOpen && !menuIsInitialized)
         {
-            // If menu should be open on GUI initialization, check if the menu system is initialized first
+            //If menu should be open on GUI initialization, check if the menu system is initialized first
             obdMenuInit(&obd, &sm, menu1, FONT_NORMAL, 0, -1, -1, -1, -1, false);
             obdMenuSetCallback(&sm, GlobalMenuCallback);
         }
         else
         {
-            // Otherwise just clear the display and go to normal operation
+            //Otherwise just clear the display and go to normal operation
             clearDisplay();
         }
     }
@@ -143,22 +137,15 @@ namespace TeensySynth
         {
             if (menuIsOpen)
             {
-                switch (currentMenuItem)
+                if (currentMenuItem == 0)
                 {
-                case MENU_ITEM_LOAD_PRESET:
-#if SYNTH_DEBUG > 0
                     Serial.printf("Load preset %d", setting[currentMenuItem]);
-#endif
-                    break;
-                case MENU_ITEM_SAVE_PRESET:
-#if SYNTH_DEBUG > 0
-                    Serial.printf("Save preset %d", setting[currentMenuItem]);
-#endif
-                    break;
-                case MENU_ITEM_SET_MIDI_CHANNEL:
-#if SYNTH_DEBUG > 0
-                    Serial.printf("Set MIDI channel to  %d", setting[currentMenuItem]);
-#endif                
+                    ts->loadPreset(setting[0]);
+                }
+                if (currentMenuItem == 1)
+                {
+                    Serial.printf("Save preset %d", setting[1]);
+                    ts->savePreset(setting[1]);
                 }
             }
         }
