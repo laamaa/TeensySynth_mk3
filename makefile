@@ -18,7 +18,7 @@ BOARD_ID         := TEENSY40
 MCU              := imxrt1062
 
 LIBS_LOCAL_BASE  := lib
-LIBS_LOCAL       := Audio Encoder SD SerialFlash SPI Wire OpenAudio_ArduinoLibrary OneBitDisplay BitBang_I2C Bounce2
+LIBS_LOCAL       := Audio Encoder SD SerialFlash SPI Wire OpenAudio_ArduinoLibrary OneBitDisplay BitBang_I2C Bounce2 EEPROM
 
 CORE_BASE        := core
 GCC_BASE         := C:\PROGRA~2\Arduino\hardware\tools\arm\bin

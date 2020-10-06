@@ -56,7 +56,7 @@ namespace TeensySynth
 
     void MidiControls::update()
     {
-        while (usbMIDI.read(SYNTH_MIDICHANNEL))
+        while (usbMIDI.read(settings->getMidiChannel()))
         {
             switch (usbMIDI.getType())
             {

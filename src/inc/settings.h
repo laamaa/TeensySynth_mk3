@@ -1,13 +1,18 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
+#include <Arduino.h>
+
+namespace TeensySynth
+{
+
 // Enable debug messages - 0=off, 1=less, 2=more
 #define SYNTH_DEBUG 1
 
 // Amount of polyphony
 #define NVOICES 6
 
-// Midi channel
+// Default midi channel
 #define SYNTH_MIDICHANNEL 7
 
 // Number of presets
@@ -19,12 +24,6 @@
 // Reference level for mixing signals in master bus. Range isn't limited, but sensible values are 0.2f-0.9f.
 #define MIX_LEVEL 0.8f
 
-// How much reverb should be sent to chorus. Range = 0.0f - 1.0f
-#define CHORUS_REV_LEVEL 0.8f
-
-// Pre-reverb highpass filter frequency. Range = 0.0f >
-#define REV_HIGHPASS 150.0f
-
 // Initial potentiometer update threshold value, to prevent noise from triggering parameter updates
 #define POT_THRESHOLD 6
 
@@ -33,10 +32,60 @@
 
 //Constrain macro, borrowed from stmlib
 #define CONSTRAIN(var, min, max) \
-  if (var < (min)) { \
-    var = (min); \
-  } else if (var > (max)) { \
-    var = (max); \
+  if (var < (min))               \
+  {                              \
+    var = (min);                 \
+  }                              \
+  else if (var > (max))          \
+  {                              \
+    var = (max);                 \
   }
+
+  class Settings
+  {
+
+  public:
+    inline void setMidiChannel(uint8_t newMidiChannel)
+    {
+      CONSTRAIN(newMidiChannel, 0, 15);
+      midiChannel = newMidiChannel;
+    }
+
+    inline uint8_t getMidiChannel()
+    {
+      return midiChannel;
+    }
+
+    // Set how much reverb should be sent to chorus. Range = 0.0f - 1.0f.
+    inline void setChorusReverbLevel(float newChorusReverbLevel)
+    {
+      CONSTRAIN(newChorusReverbLevel, 0.0f, 1.0f);
+      chorusReverbLevel = newChorusReverbLevel;
+    }
+
+    inline float getChorusReverbLevel()
+    {
+      return chorusReverbLevel;
+    }
+
+    // Set highpass filter frequency before reverb
+    inline void setReverbHighPassFreq(float newReverbHighPassFreq)
+    {
+      CONSTRAIN(newReverbHighPassFreq, 0.1f, 10000.0f);
+      reverbHighPassFreq = newReverbHighPassFreq;
+    }
+
+    inline float getReverbHighPassFreq()
+    {
+      return reverbHighPassFreq;
+    }
+
+  private:
+    uint8_t midiChannel = 7;           // Default midi channel
+    float chorusReverbLevel = 0.8f;    // How much reverb should be sent to chorus by default. Range = 0.0f - 1.0f
+    float reverbHighPassFreq = 150.0f; // Highpass filter frequency before reverb
+  };
+
+} // namespace TeensySynth
 
 #endif

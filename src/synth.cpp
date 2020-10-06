@@ -30,7 +30,6 @@ namespace TeensySynth
         //delete fxReverb;
     }
 
-    //Create patch for Teensy audio library components
     void Synth::createAudioPatch()
     {
         for (int i = 0; i < NVOICES; i++)
@@ -66,7 +65,6 @@ namespace TeensySynth
         patchConverterI2s[1] = new AudioConnection(float2Int2, 0, i2s1, 1);
     }
 
-    //Inititializes audio signal path and default values for its components
     void Synth::init()
     {
         //Allocate audio memory. Floating point and integer versions need their own blocks.
@@ -82,14 +80,26 @@ namespace TeensySynth
 
         createAudioPatch();
         resetAll();
+        Serial.println(sizeof(Patch) * PRESETS + sizeof(Settings));
+    }
+
+    void Synth::loadPreset(uint8_t newPreset)
+    {
+        CONSTRAIN(newPreset, 0, PRESETS - 1);
+        currentPatch = preset[newPreset];
+        activePresetNumber = newPreset;
+    }
+
+    void Synth::savePreset(uint8_t newPreset)
+    {
+        CONSTRAIN(newPreset, 0, PRESETS - 1);
+        preset[newPreset] = currentPatch;
+        activePresetNumber = newPreset;
     }
 
     //Handles MIDI note on events
     void Synth::noteOn(uint8_t channel, uint8_t note, uint8_t velocity)
     {
-        if (omniOn || channel != SYNTH_MIDICHANNEL)
-            return;
-
         notesAdd(notesPressed, note);
         currentPatch.polyOn = true;
 
@@ -153,9 +163,6 @@ namespace TeensySynth
 
     Synth::Oscillator *Synth::noteOffReal(uint8_t channel, uint8_t note, uint8_t velocity, bool ignoreSustain)
     {
-        if (!omniOn && channel != SYNTH_MIDICHANNEL)
-            return 0;
-
         int8_t lastNote = notesDel(notesPressed, note);
 
         if (sustainPressed && !ignoreSustain)
@@ -283,16 +290,13 @@ namespace TeensySynth
     void Synth::oscOn(Oscillator &osc, int8_t note, uint8_t velocity)
     {
         float v = currentPatch.velocityOn ? velocity / 127. : 1;
+        CONSTRAIN(v,0.8f,1.0f);
         if (osc.note != note)
         {
             osc.wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::note, note);
             osc.wf->setModulationsParameter(AudioSynthPlaits_F32::Parameters::trigger, 1.0f);
-            osc.wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::decay, currentPatch.decay);
+            osc.wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::decay, currentPatch.decay*v);
             notesAdd(notesOn, note);
-            if (!osc.velocity)
-            {
-                // osc.flt_env->noteOn();
-            }
             // osc.amp->gain(GAIN_OSC * v);
             osc.velocity = velocity;
             osc.note = note;
@@ -375,7 +379,7 @@ namespace TeensySynth
         mixMasterR.gain(0, MIX_LEVEL - currentPatch.reverbDepth);                              //dry signal R
         mixMasterR.gain(1, currentPatch.chorusDepth * (MIX_LEVEL - currentPatch.reverbDepth)); //chorus signal R
         mixMasterR.gain(2, currentPatch.reverbDepth);                                          //reverb signal R
-        mixChorus.gain(1, CHORUS_REV_LEVEL * currentPatch.reverbDepth);                        //Reverb -> Chorus level
+        mixChorus.gain(1, settings->getChorusReverbLevel() * currentPatch.reverbDepth);        //Reverb -> Chorus level
     }
 
     void Synth::resetAll()
@@ -397,12 +401,12 @@ namespace TeensySynth
         mixMasterR.gain(1, MIX_LEVEL - 0.1f); //chorus signal R
         mixMasterR.gain(2, 0.1f);             //reverb signal R
 
-        fxReverbHighpass.setHighpass(0, REV_HIGHPASS); // Highpass filter before reverb
+        fxReverbHighpass.setHighpass(0, settings->getReverbHighPassFreq()); // Highpass filter before reverb
         fxReverb->roomsize(0.7f);
         fxReverb->damping(0.7f);
 
         mixChorus.gain(0, 0.8f);             // Chorus input level
-        mixChorus.gain(1, CHORUS_REV_LEVEL); // Reverb -> Chorus level
+        mixChorus.gain(1, settings->getChorusReverbLevel()); // Reverb -> Chorus level
 
         updateOscillator();
         updateOscillatorBalance();

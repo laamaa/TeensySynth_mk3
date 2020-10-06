@@ -4,8 +4,6 @@
 
 namespace TeensySynth
 {
-
-    //Check encoder readings. Sorry for this mess.
     void HardwareControls::readAndProcessEncoders(bool update)
     {
         int i, ctlValue;
@@ -16,6 +14,7 @@ namespace TeensySynth
             button[i].update();
             if (button[i].rose())
             {
+                //Send an OK/Enter event to GUI object, further handling is done there.
                 gui->menuEvent(i, GUI::EventType::EVENT_OK);
             }
 
@@ -23,7 +22,7 @@ namespace TeensySynth
             ctlValue = encoder[i]->readAndReset();
             //The crappy encoders that I bought from Aliexpress seem to be like 1 click = 4 value increments.. trying to work around that
             if (ctlValue < 0)
-            {                             
+            {
                 //If the encoder has switched directions before reaching 4 value increments, reset the value
                 if (encValue[i] < 0)
                     encValue[i] = 0;
@@ -129,20 +128,21 @@ namespace TeensySynth
             break;
         case CTL_ENC_2:
             //Enc2 = Load preset
-            //TODO
+            CONSTRAIN(currentCtlValue[CTL_ENC_2], 0, PRESETS - 1);
+            ts->loadPreset(currentCtlValue[CTL_ENC_2]);
             break;
         case CTL_SW_1:
             break;
         case CTL_SW_2:
-            break;
-        case CTL_FREQMOD_AMOUNT:
-            ts->setFreqMod((float)value / 1023.0f);
             break;
         case CTL_TIMBREMOD_AMOUNT:
             ts->setTimbreMod((float)value / 1023.0f);
             break;
         case CTL_MORPHMOD_AMOUNT:
             ts->setMorphMod((float)value / 1023.0f);
+            break;
+        case CTL_FREQMOD_AMOUNT:
+            ts->setFreqMod((float)value / 1023.0f);
             break;
         case CTL_LPG_COLOUR:
             ts->setLpgColour((float)value / 1023.0f);

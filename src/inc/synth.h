@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "settings.h"
+#include "patch.h"
 #include "dsp/synth_plaits_f32.h"
 #include "dsp/filter_moog_f32.h"
 #include "dsp/effect_ensemble_f32.h"
@@ -14,23 +15,40 @@ namespace TeensySynth
     class Synth
     {
     public:
+        Synth(TeensySynth::Settings *ptrSettings)
+        {
+            settings = ptrSettings;
+        }
         ~Synth();
 
+        // Create patch for Teensy audio library components
         void createAudioPatch();
+
+        // Inititializes audio signal path and default values for its components
         void init();
 
-        //Trigger a new voice
+        // Read a preset from the preset-table and update synth parameters accordingly
+        void loadPreset(uint8_t newPreset);
+
+        // Store current synth parameters to preset-table
+        void savePreset(uint8_t newPreset);
+
+        // Initialize default values for audio signal path components
+        void resetAll();
+
+        // Trigger a new voice
         void noteOn(uint8_t channel, uint8_t note, uint8_t velocity);
 
-        //Kill an existing voice
+        // Kill an existing voice
         inline void noteOff(uint8_t channel, uint8_t note, uint8_t velocity)
         {
             noteOffReal(channel, note, velocity, false);
         }
 
+        // Set Plaits synth engine. Range: 0-15.
         inline void setSynthEngine(int engine)
         {
-            CONSTRAIN(engine, 0, 16);
+            CONSTRAIN(engine, 0, 15);
             currentPatch.engine = engine;
             updateOscillator();
         }
@@ -56,7 +74,7 @@ namespace TeensySynth
         // Set lowpass filter resonance (Q value). Affects all oscillators. Range: 0.7f - 5.0f
         inline void setFilterResonance(float resonance)
         {
-            CONSTRAIN(resonance, 0.1f, 10.0f);
+            CONSTRAIN(resonance, 0.7f, 5.0f);
             currentPatch.filterResonance = resonance;
             updateFilter();
         }
@@ -92,7 +110,7 @@ namespace TeensySynth
             return currentPatch.harmonics;
         }
 
-        // Set oscillator parameter "timbre". Affects all oscillators.
+        // Set oscillator parameter "timbre". Affects all oscillators. Range: 0.0f - 1.0f.
         inline void setOscillatorTimbre(float timbre)
         {
             CONSTRAIN(timbre, 0.0f, 1.0f);
@@ -105,7 +123,7 @@ namespace TeensySynth
             return currentPatch.timbre;
         }
 
-        // Set oscillator parameter "morph". Affects all oscillators.
+        // Set oscillator parameter "morph". Affects all oscillators. Range: 0.0f - 1.0f.
         inline void setOscillatorMorph(float morph)
         {
             CONSTRAIN(morph, 0.0f, 1.0f);
@@ -118,7 +136,7 @@ namespace TeensySynth
             return currentPatch.morph;
         }
 
-        // Set the balance between main and aux signals that the oscillators produce
+        // Set the balance between main and aux signals that the oscillators produce. Range: 0.0f - 1.0f.
         inline void setOscillatorBalance(float balance)
         {
             CONSTRAIN(balance, 0.0f, 1.0f);
@@ -132,6 +150,7 @@ namespace TeensySynth
             return currentPatch.balance;
         }
 
+        // Set oscillator interal decay envelope value. Affects all oscillators. Range: 0.0f - 1.0f.
         inline void setOscillatorDecay(float decay)
         {
             CONSTRAIN(decay, 0.0f, 1.0f);
@@ -144,6 +163,7 @@ namespace TeensySynth
             return currentPatch.decay;
         }
 
+        // Set master reverb room size. Range: 0.1f-0.95f.
         inline void setReverbSize(float size)
         {
             CONSTRAIN(size, 0.1f, 0.95f);
@@ -157,6 +177,7 @@ namespace TeensySynth
             return currentPatch.reverbSize;
         }
 
+        // Set master reverb level. Range: 0.0f - MIX_LEVEL in settings.h
         inline void setReverbDepth(float depth)
         {
             CONSTRAIN(depth, 0.0f, MIX_LEVEL);
@@ -169,7 +190,7 @@ namespace TeensySynth
             return currentPatch.reverbDepth;
         }
 
-        //Set chorus depth (mix%). Range 0.0f-1.0f.
+        // Set chorus depth (mix%). Range: 0.0f-1.0f.
         inline void setChorusDepth(float depth)
         {
             CONSTRAIN(depth, 0.0f, 1.0f);
@@ -177,9 +198,7 @@ namespace TeensySynth
             updateChorusAndReverb();
         }
 
-        void resetAll();
-
-        //Set frequency modulation amount. Range 0.0f-1.0f.
+        // Set frequency modulation amount. Range: 0.0f-1.0f.
         inline void setFreqMod(float freqMod)
         {
             CONSTRAIN(freqMod, 0.0f, 1.0f);
@@ -192,7 +211,7 @@ namespace TeensySynth
             return currentPatch.freqMod;
         }
 
-        //Set timbre modulation amount. Range 0.0f-1.0f.
+        // Set timbre modulation amount. Range: 0.0f-1.0f.
         inline void setTimbreMod(float timbreMod)
         {
             CONSTRAIN(timbreMod, 0.0f, 1.0f);
@@ -205,7 +224,7 @@ namespace TeensySynth
             return currentPatch.timbreMod;
         }
 
-        //Set morph modulation amount. Range 0.0f-1.0f.
+        // Set morph modulation amount. Range: 0.0f-1.0f.
         inline void setMorphMod(float morphMod)
         {
             CONSTRAIN(morphMod, 0.0f, 1.0f);
@@ -218,6 +237,7 @@ namespace TeensySynth
             return currentPatch.morphMod;
         }
 
+        // Set Plaits low pass filter colour (affected by Plaits internal decay envelope setting). Range: 0.0f - 1.0f.
         inline void setLpgColour(float lpgColour)
         {
             CONSTRAIN(lpgColour, 0.0f, 1.0f);
@@ -230,11 +250,13 @@ namespace TeensySynth
             return currentPatch.lpgColour;
         }
 
+        // Return a pointer to audio master output left, for use with Oscilloscope or similiar analysis
         AudioStream &getMasterL()
         {
             return float2Int1;
         }
 
+        // Return a pointer to audio master output right, for use with Oscilloscope or similiar analysis
         AudioStream &getMasterR()
         {
             return float2Int2;
@@ -260,6 +282,8 @@ namespace TeensySynth
 #endif
 
     private:
+        Settings *settings;
+
         //Audio signal path components
         AudioSynthPlaits_F32 waveform[NVOICES];
         AudioMixer4_F32 amp[NVOICES];
@@ -306,32 +330,6 @@ namespace TeensySynth
             uint8_t velocity;
         };
 
-        struct Patch
-        {
-            char presetName[12] = "Init";  // Title of the preset
-            int engine = 0;                // Plaits synth engine number
-            float harmonics = 0.0f;        // Plaits oscillator harmonics parameter
-            float timbre = 0.0f;           // Plaits oscillator timbre parameter
-            float morph = 0.0f;            // Plaits oscillator morph parameter
-            float balance = 0.0f;          // Balance between main/aux outputs of the Plaits oscillator. 0.0f = main only, 1.0f = aux only
-            float decay = 1.0f;            // Plaits oscillator decay value
-            float level = 1.0f;            // Patch volume
-            float lpgColour = 0.0f;        // Plaits oscillator Low Pass colour parameter
-            float freqMod = 0.0f;          // Plaits oscillator freq modulation
-            float timbreMod = 0.0f;        // Plaits oscillator timbre modulation
-            float morphMod = 0.0f;         // Plaits oscillator morph modulation
-            float filterCutoff = 19200.0f; // Master filter cutoff in Hz
-            float filterResonance = 1.0f;  // Master filter resonance
-            float filterDrive = 1.0f;      // Master filter drive
-            bool portamentoOn = false;     // Is portamento enabled (this might get removed)
-            uint16_t portamentoTime = 200; // Portamento time
-            bool velocityOn = false;       // velocity enabled
-            bool polyOn = true;            // polyphonic mode on
-            float reverbSize = 0.7f;       // Master reverb room size
-            float reverbDepth = 0.1f;      // Master reverb amount
-            float chorusDepth = MIX_LEVEL; // Master chorus amount
-        };
-
         //These are used to store active notes
         int8_t notesOn[NVOICES] = {-1};
         int8_t notesPressed[NVOICES] = {-1};
@@ -372,9 +370,6 @@ namespace TeensySynth
         void updateOscillatorBalance();
         void updateDecay();
         void updateChorusAndReverb();
-        //load patches saved in flash memory, needs a pointer to an array with enough space for all presets (use NUM_PRESETS defined in settings.h)
-        void loadPatchesFromFlash(Patch *patches);
-        void savePatchesToFlash(Patch *patches);
     };
 } // namespace TeensySynth
 #endif

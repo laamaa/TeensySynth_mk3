@@ -12,7 +12,7 @@ namespace TeensySynth
     class GUI
     {
     public:
-        GUI(TeensySynth::Synth *tsPointer);
+        GUI(TeensySynth::Synth *ptrSynth, TeensySynth::Settings *ptrSettings);
 
         //Does the display need to be refreshed?
         bool updateDisplay = true;
@@ -98,6 +98,13 @@ namespace TeensySynth
             "16",
             "  "};
 
+        enum MenuItem
+        {
+            MENU_ITEM_LOAD_PRESET,
+            MENU_ITEM_SAVE_PRESET,
+            MENU_ITEM_SET_MIDI_CHANNEL
+        };
+
         //Main menu table
         char *menu1[6];
 
@@ -109,6 +116,9 @@ namespace TeensySynth
 
         //Pointer to main synth object
         Synth *ts;
+
+        //Pointer to synth main settings object
+        Settings *settings;
 
         //Objects needed by OneBitDisplay library
         SIMPLEMENU sm;
