@@ -105,8 +105,8 @@ namespace TeensySynth
         int16_t encValue[2];
 
         /* Thresholds for updating parameters from potentiometer readings
-         * The default value is defined in settings.h, but this is also an array 
-         * so that we can change thresholds also individually if there is a single noisy pot 
+         * The default value is defined in settings.h, but this is also an array
+         * so that we can change thresholds also individually if there is a single noisy pot
          */
         uint8_t potThreshold[LAST_CTL];
 

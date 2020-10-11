@@ -138,46 +138,6 @@ namespace TeensySynth
         case CTL_SW_2:
             //SW2 = select knob layer 1/2
             break;
-        case CTL_TIMBREMOD_AMOUNT:
-            newValue = (float)value / 1023.0f;
-            if (valueInLatchRange(newValue, ts->getTimbreMod()))
-                ts->setTimbreMod(newValue);
-            break;
-        case CTL_MORPHMOD_AMOUNT:
-            newValue = (float)value / 1023.0f;
-            if (valueInLatchRange(newValue, ts->getMorphMod()))
-                ts->setMorphMod(newValue);
-            break;
-        case CTL_FREQMOD_AMOUNT:
-            newValue = (float)value / 1023.0f;
-            if (valueInLatchRange(newValue, ts->getFreqMod()))
-                ts->setFreqMod(newValue);
-            break;
-        case CTL_LPG_COLOUR:
-            newValue = (float)value / 1023.0f;
-            if (valueInLatchRange(newValue, ts->getLpgColour()))
-                ts->setLpgColour(newValue);
-            break;
-        case CTL_DECAY:
-            newValue = (float)value / 1023.0f;
-            if (valueInLatchRange(newValue, ts->getOscillatorDecay()))
-                ts->setOscillatorDecay(newValue);
-            break;
-        case CTL_REV_SIZE:
-            newValue = (float)value / 1023.0f;
-            if (valueInLatchRange(newValue, ts->getReverbSize()))
-                ts->setReverbSize(newValue);
-            break;
-        case CTL_REV_DEPTH:
-            newValue = powf((value / 101.53), 3) / 1023.0f * MIX_LEVEL;
-            if (valueInLatchRange(newValue, ts->getReverbDepth()))
-                ts->setReverbDepth(newValue);
-            break;
-        case CTL_CHORUS_DEPTH:
-            newValue = (float)value / 1023.0f;
-            if (valueInLatchRange(newValue, ts->getChorusDepth()))
-                ts->setChorusDepth(newValue);
-            break;
         case CTL_HARMONICS:
             newValue = (float)value / 1023.0f;
             if (valueInLatchRange(newValue, ts->getOscillatorHarmonics()))
@@ -193,10 +153,55 @@ namespace TeensySynth
             if (valueInLatchRange(newValue, ts->getOscillatorTimbre()))
                 ts->setOscillatorTimbre(newValue);
             break;
+        case CTL_DECAY:
+            newValue = (float)value / 1023.0f;
+            if (valueInLatchRange(newValue, ts->getOscillatorDecay()))
+                ts->setOscillatorDecay(newValue);
+            break;
         case CTL_BALANCE:
             newValue = (float)value / 1023.0f;
             if (valueInLatchRange(newValue, ts->getOscillatorBalance()))
                 ts->setOscillatorBalance(newValue);
+            break;
+        case CTL_LPG_COLOUR:
+            newValue = (float)value / 1023.0f;
+            if (valueInLatchRange(newValue, ts->getLpgColour()))
+                ts->setLpgColour(newValue);
+            break;
+        case CTL_TIMBREMOD_AMOUNT:
+            newValue = (float)value / 1023.0f;
+            if (valueInLatchRange(newValue, ts->getTimbreMod()))
+                ts->setTimbreMod(newValue);
+            break;
+        case CTL_MORPHMOD_AMOUNT:
+            newValue = (float)value / 1023.0f;
+            if (valueInLatchRange(newValue, ts->getMorphMod()))
+                ts->setMorphMod(newValue);
+            break;
+        case CTL_FREQMOD_AMOUNT:
+            newValue = (float)value / 1023.0f;
+            if (valueInLatchRange(newValue, ts->getFreqMod()))
+                ts->setFreqMod(newValue);
+            break;
+        case CTL_VOLUME:
+            newValue = (float)value / 1023.0f;
+            if (valueInLatchRange(newValue, ts->getVolume()))
+                ts->setVolume(newValue);
+            break;
+        case CTL_REV_SIZE:
+            newValue = (float)value / 1023.0f;
+            if (valueInLatchRange(newValue, ts->getReverbSize()))
+                ts->setReverbSize(newValue);
+            break;
+        case CTL_REV_DEPTH:
+            newValue = powf((value / 101.53), 3) / 1023.0f * MIX_LEVEL;
+            if (valueInLatchRange(newValue, ts->getReverbDepth()))
+                ts->setReverbDepth(newValue);
+            break;
+        case CTL_CHORUS_DEPTH:
+            newValue = (float)value / 1023.0f;
+            if (valueInLatchRange(newValue, ts->getChorusDepth()))
+                ts->setChorusDepth(newValue);
             break;
         case CTL_FLT_CUTOFF:
             newValue = 30 + 12 * powf((value / 101.53), 3);

@@ -88,7 +88,7 @@ namespace TeensySynth
         {
             return false;
         }
-    }    
+    }
 
     void Synth::init()
     {
@@ -405,8 +405,8 @@ namespace TeensySynth
         Oscillator *o = oscs, *end = oscs + NVOICES;
         do
         {
-            o->amp->gain(0, OSC_LEVEL - currentPatch.balance);
-            o->amp->gain(1, currentPatch.balance);
+            o->amp->gain(0, (OSC_LEVEL - currentPatch.balance) * currentPatch.volume);
+            o->amp->gain(1, currentPatch.balance * currentPatch.volume);
         } while (++o < end);
     }
 
@@ -511,7 +511,7 @@ namespace TeensySynth
             //initialize flash memory
             EEPROM.put(0, memVersion);
             EEPROM.put(sizeof(int16_t), preset);
-            EEPROM.put(settingsOffset, settings);            
+            EEPROM.put(settingsOffset, settings);
             break;
         default:
             break;

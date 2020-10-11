@@ -110,7 +110,7 @@ namespace TeensySynth
         // Pointer to main synth object
         Synth *ts;
 
-        // Pointer to settings object 
+        // Pointer to settings object
         Settings *settings;
 
         // Objects needed by OneBitDisplay library

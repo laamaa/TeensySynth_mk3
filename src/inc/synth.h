@@ -191,6 +191,14 @@ namespace TeensySynth
         }
         inline float getLpgColour() { return currentPatch.lpgColour; }
 
+        inline void setVolume(float newVolume)
+        {
+            CONSTRAIN(newVolume, 0.0f, 1.0f);
+            currentPatch.volume = newVolume;
+            updateOscillatorBalance();
+        }
+        inline float getVolume() { return currentPatch.volume; }
+
         // Return a pointer to audio master output left, for use with Oscilloscope or similiar analysis
         AudioStream &getMasterL() { return float2Int1; }
 
