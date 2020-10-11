@@ -14,7 +14,7 @@ char *GlobalMenuCallback(int iIndex)
 
 namespace TeensySynth
 {
-    GUI::GUI(TeensySynth::Synth *ptrSynth, TeensySynth::Settings *ptrSettings)
+    GUI::GUI(Synth *ptrSynth, Settings *ptrSettings)
     {
         ptrGui = this;
         ts = ptrSynth;
@@ -139,12 +139,18 @@ namespace TeensySynth
             {
                 if (currentMenuItem == 0)
                 {
+                    //Load preset
+#if SYNTH_DEBUG > 0
                     Serial.printf("Load preset %d", setting[currentMenuItem]);
+#endif
                     ts->loadPreset(setting[0]);
                 }
                 if (currentMenuItem == 1)
                 {
+                    //Save preset
+#if SYNTH_DEBUG > 0
                     Serial.printf("Save preset %d", setting[1]);
+#endif
                     ts->savePreset(setting[1]);
                 }
             }

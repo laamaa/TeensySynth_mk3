@@ -32,6 +32,7 @@ namespace TeensySynth
         float reverbDepth = 0.1f;            // Master reverb amount
         float chorusDepth = MIX_LEVEL;       // Master chorus amount
     };
+
 } // namespace TeensySynth
 
 #endif

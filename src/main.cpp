@@ -12,7 +12,7 @@ using namespace TeensySynth;
 Settings settings;
 Synth ts(&settings);
 GUI gui(&ts, &settings);
-HardwareControls hw(&ts, &gui);
+HardwareControls hw(&ts, &gui, &settings);
 MidiControls midi(&ts, &settings);
 //Oscilloscope oscilloscope(&ts,&gui); //unfortunately I2C is too slow for this to work nicely :((
 

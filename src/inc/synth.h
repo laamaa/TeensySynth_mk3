@@ -15,7 +15,7 @@ namespace TeensySynth
     class Synth
     {
     public:
-        Synth(TeensySynth::Settings *ptrSettings)
+        Synth(Settings *ptrSettings)
         {
             settings = ptrSettings;
         }
@@ -52,11 +52,7 @@ namespace TeensySynth
             currentPatch.engine = engine;
             updateOscillator();
         }
-
-        inline uint8_t getSynthEngine()
-        {
-            return currentPatch.engine;
-        }
+        inline uint8_t getSynthEngine() { return currentPatch.engine; }
 
         // Set lowpass filter cutoff frequency in Hz. Affects all oscillators. Range: 20.0f - 19200.0f (on 48kHz sample rate)
         inline void setFilterCutoff(float cutoff)
@@ -65,11 +61,7 @@ namespace TeensySynth
             currentPatch.filterCutoff = cutoff;
             updateFilter();
         }
-
-        inline float getFilterCutoff()
-        {
-            return currentPatch.filterCutoff;
-        }
+        inline float getFilterCutoff() { return currentPatch.filterCutoff; }
 
         // Set lowpass filter resonance (Q value). Affects all oscillators. Range: 0.7f - 5.0f
         inline void setFilterResonance(float resonance)
@@ -78,11 +70,7 @@ namespace TeensySynth
             currentPatch.filterResonance = resonance;
             updateFilter();
         }
-
-        inline float getFilterResonance()
-        {
-            return currentPatch.filterResonance;
-        }
+        inline float getFilterResonance() { return currentPatch.filterResonance; }
 
         // Set lowpass filter overdrive amount. Affects all oscillators. Range: 0.1f - 10.0f
         inline void setFilterDrive(float drive)
@@ -91,11 +79,7 @@ namespace TeensySynth
             currentPatch.filterDrive = drive;
             updateFilter();
         }
-
-        inline float getFilterDrive()
-        {
-            return currentPatch.filterDrive;
-        }
+        inline float getFilterDrive() { return currentPatch.filterDrive; }
 
         // Set oscillator parameter "harmonics". Affects all oscillators.
         inline void setOscillatorHarmonics(float harmonics)
@@ -104,11 +88,7 @@ namespace TeensySynth
             currentPatch.harmonics = harmonics;
             updateOscillator();
         }
-
-        inline float getOscillatorHarmonics()
-        {
-            return currentPatch.harmonics;
-        }
+        inline float getOscillatorHarmonics() { return currentPatch.harmonics; }
 
         // Set oscillator parameter "timbre". Affects all oscillators. Range: 0.0f - 1.0f.
         inline void setOscillatorTimbre(float timbre)
@@ -117,11 +97,7 @@ namespace TeensySynth
             currentPatch.timbre = timbre;
             updateOscillator();
         }
-
-        inline float getOscillatorTimbre()
-        {
-            return currentPatch.timbre;
-        }
+        inline float getOscillatorTimbre() { return currentPatch.timbre; }
 
         // Set oscillator parameter "morph". Affects all oscillators. Range: 0.0f - 1.0f.
         inline void setOscillatorMorph(float morph)
@@ -130,11 +106,7 @@ namespace TeensySynth
             currentPatch.morph = morph;
             updateOscillator();
         }
-
-        inline float getOscillatorMorph()
-        {
-            return currentPatch.morph;
-        }
+        inline float getOscillatorMorph() { return currentPatch.morph; }
 
         // Set the balance between main and aux signals that the oscillators produce. Range: 0.0f - 1.0f.
         inline void setOscillatorBalance(float balance)
@@ -144,11 +116,7 @@ namespace TeensySynth
             currentPatch.balance = balance;
             updateOscillatorBalance();
         }
-
-        inline float getOscillatorBalance()
-        {
-            return currentPatch.balance;
-        }
+        inline float getOscillatorBalance() { return currentPatch.balance; }
 
         // Set oscillator interal decay envelope value. Affects all oscillators. Range: 0.0f - 1.0f.
         inline void setOscillatorDecay(float decay)
@@ -157,11 +125,7 @@ namespace TeensySynth
             currentPatch.decay = decay;
             updateOscillator();
         }
-
-        inline float getOscillatorDecay()
-        {
-            return currentPatch.decay;
-        }
+        inline float getOscillatorDecay() { return currentPatch.decay; }
 
         // Set master reverb room size. Range: 0.1f-0.95f.
         inline void setReverbSize(float size)
@@ -171,11 +135,7 @@ namespace TeensySynth
 
             updateChorusAndReverb();
         }
-
-        inline float getReverbSize()
-        {
-            return currentPatch.reverbSize;
-        }
+        inline float getReverbSize() { return currentPatch.reverbSize; }
 
         // Set master reverb level. Range: 0.0f - MIX_LEVEL in settings.h
         inline void setReverbDepth(float depth)
@@ -184,11 +144,7 @@ namespace TeensySynth
             currentPatch.reverbDepth = depth;
             updateChorusAndReverb();
         }
-
-        inline float getReverbDepth()
-        {
-            return currentPatch.reverbDepth;
-        }
+        inline float getReverbDepth() { return currentPatch.reverbDepth; }
 
         // Set chorus depth (mix%). Range: 0.0f-1.0f.
         inline void setChorusDepth(float depth)
@@ -197,6 +153,7 @@ namespace TeensySynth
             currentPatch.chorusDepth = depth;
             updateChorusAndReverb();
         }
+        inline float getChorusDepth() { return currentPatch.chorusDepth; }
 
         // Set frequency modulation amount. Range: 0.0f-1.0f.
         inline void setFreqMod(float freqMod)
@@ -205,11 +162,7 @@ namespace TeensySynth
             currentPatch.freqMod = freqMod;
             updateOscillator();
         }
-
-        inline float getFreqMod()
-        {
-            return currentPatch.freqMod;
-        }
+        inline float getFreqMod() { return currentPatch.freqMod; }
 
         // Set timbre modulation amount. Range: 0.0f-1.0f.
         inline void setTimbreMod(float timbreMod)
@@ -218,11 +171,7 @@ namespace TeensySynth
             currentPatch.timbreMod = timbreMod;
             updateOscillator();
         }
-
-        inline float getTimbreMod()
-        {
-            return currentPatch.timbreMod;
-        }
+        inline float getTimbreMod() { return currentPatch.timbreMod; }
 
         // Set morph modulation amount. Range: 0.0f-1.0f.
         inline void setMorphMod(float morphMod)
@@ -231,11 +180,7 @@ namespace TeensySynth
             currentPatch.morphMod = morphMod;
             updateOscillator();
         }
-
-        inline float getMorphMod()
-        {
-            return currentPatch.morphMod;
-        }
+        inline float getMorphMod() { return currentPatch.morphMod; }
 
         // Set Plaits low pass filter colour (affected by Plaits internal decay envelope setting). Range: 0.0f - 1.0f.
         inline void setLpgColour(float lpgColour)
@@ -244,33 +189,17 @@ namespace TeensySynth
             currentPatch.lpgColour = lpgColour;
             updateOscillator();
         }
-
-        inline float getLpgColour()
-        {
-            return currentPatch.lpgColour;
-        }
+        inline float getLpgColour() { return currentPatch.lpgColour; }
 
         // Return a pointer to audio master output left, for use with Oscilloscope or similiar analysis
-        AudioStream &getMasterL()
-        {
-            return float2Int1;
-        }
+        AudioStream &getMasterL() { return float2Int1; }
 
         // Return a pointer to audio master output right, for use with Oscilloscope or similiar analysis
-        AudioStream &getMasterR()
-        {
-            return float2Int2;
-        }
+        AudioStream &getMasterR() { return float2Int2; }
 
-        uint8_t getActivePresetNumber()
-        {
-            return activePresetNumber;
-        }
+        uint8_t getActivePresetNumber() { return activePresetNumber; }
 
-        char *getActivePresetName()
-        {
-            return currentPatch.presetName;
-        }
+        char *getActivePresetName() { return currentPatch.presetName; }
 
 #if SYNTH_DEBUG > 0
         float statsCpu = 0;
@@ -350,7 +279,7 @@ namespace TeensySynth
         const uint16_t memVersion = sizeof(Patch) * PRESETS + sizeof(Settings);
 
         //Offset for reading settings from the flash (stored after memory version and patches)
-        const uint16_t settingsOffset = sizeof(uint16_t) + sizeof(Patch) * PRESETS;    
+        const uint16_t settingsOffset = sizeof(uint16_t) + sizeof(Patch) * PRESETS;
 
         //Variables related to momentary information
         int8_t portamentoDir;

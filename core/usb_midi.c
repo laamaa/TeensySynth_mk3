@@ -331,7 +331,7 @@ int usb_midi_read(uint32_t channel)
 	type1 = n & 15;
 	type2 = (n >> 12) & 15;
 	b1 = (n >> 8) & 0xFF;
-	ch = (b1 & 15) + 1;
+	ch = (b1 & 15);
 	usb_midi_msg_cable = (n >> 4) & 15;
 	if (type1 >= 0x08 && type1 <= 0x0E) {
 		if (channel && channel != ch) {

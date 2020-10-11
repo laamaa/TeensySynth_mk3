@@ -13,10 +13,11 @@ namespace TeensySynth
     class HardwareControls
     {
     public:
-        HardwareControls(Synth *tsPointer, GUI *guiPointer)
+        HardwareControls(Synth *ptrSynth, GUI *ptrGui, Settings *ptrSettings)
         {
-            ts = tsPointer;
-            gui = guiPointer;
+            ts = ptrSynth;
+            gui = ptrGui;
+            settings = ptrSettings;
         }
 
         inline void update()
@@ -88,6 +89,9 @@ namespace TeensySynth
         // Pointer to GUI (display) controller
         GUI *gui;
 
+        // Pointer to Settings controller
+        Settings *settings;
+
         // Use Teensy's encoder library to make working with the encoders easier
         Encoder *encoder[2];
 
@@ -122,6 +126,12 @@ namespace TeensySynth
         void readAndProcessPotentiometers(bool update);
         void readAndProcessEncoders(bool update);
         void checkControlValues(bool update);
+
+        // Return true if latch is disabled or value is inside the latch threshold range
+        inline bool valueInLatchRange(float newValue, float originalValue)
+        {
+            return (!settings->getLatch() || (newValue > originalValue - settings->getLatchThreshold() && newValue < originalValue + settings->getLatchThreshold()));
+        }
     };
 } // namespace TeensySynth
 

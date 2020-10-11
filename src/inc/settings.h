@@ -13,7 +13,7 @@ namespace TeensySynth
 #define FORCE_INITIALIZE_FLASH 0
 
 // Amount of polyphony
-#define NVOICES 6
+#define NVOICES 5
 
 // Number of presets
 #define PRESETS 16
@@ -45,16 +45,13 @@ namespace TeensySynth
   {
 
   public:
+    // Set the synth's incoming MIDI channel
     inline void setMidiChannel(uint8_t newMidiChannel)
     {
       CONSTRAIN(newMidiChannel, 1, 16);
       midiChannel = newMidiChannel;
     }
-
-    inline uint8_t getMidiChannel()
-    {
-      return midiChannel;
-    }
+    inline uint8_t getMidiChannel() { return midiChannel; }
 
     // Set how much reverb should be sent to chorus. Range = 0.0f - 1.0f.
     inline void setChorusReverbLevel(float newChorusReverbLevel)
@@ -63,10 +60,7 @@ namespace TeensySynth
       chorusReverbLevel = newChorusReverbLevel;
     }
 
-    inline float getChorusReverbLevel()
-    {
-      return chorusReverbLevel;
-    }
+    inline float getChorusReverbLevel() { return chorusReverbLevel; }
 
     // Set highpass filter frequency before reverb
     inline void setReverbHighPassFreq(float newReverbHighPassFreq)
@@ -74,16 +68,25 @@ namespace TeensySynth
       CONSTRAIN(newReverbHighPassFreq, 0.1f, 10000.0f);
       reverbHighPassFreq = newReverbHighPassFreq;
     }
+    inline float getReverbHighPassFreq() { return reverbHighPassFreq; }
 
-    inline float getReverbHighPassFreq()
+    // Set whether synth parameters should update only after they've passed their initial value
+    inline void setLatch(bool newLatch) { latch = newLatch; }
+    inline bool getLatch() { return latch; }
+
+    inline void setLatchThreshold(bool newLatchThreshold)
     {
-      return reverbHighPassFreq;
+      CONSTRAIN(newLatchThreshold, 0.0f, 1.0f);
+      latchThreshold = newLatchThreshold;
     }
+    inline float getLatchThreshold() { return latchThreshold; }
 
   private:
-    uint8_t midiChannel = 7;           // Default midi channel
+    uint8_t midiChannel = 6;           // Default midi channel
     float chorusReverbLevel = 0.8f;    // How much reverb should be sent to chorus by default. Range = 0.0f - 1.0f
     float reverbHighPassFreq = 150.0f; // Highpass filter frequency before reverb
+    bool latch = true;
+    float latchThreshold = 0.1f;
   };
 
 } // namespace TeensySynth
