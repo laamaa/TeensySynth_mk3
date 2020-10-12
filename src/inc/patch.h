@@ -5,6 +5,14 @@
 
 namespace TeensySynth
 {
+    struct Envelope
+    {
+        float attack;
+        float decay;
+        float sustain;
+        float release;
+    };
+
     //Struct for storing synth parameters.
     struct Patch
     {
@@ -19,9 +27,9 @@ namespace TeensySynth
         float freqMod = 0.0f;                // Plaits oscillator freq modulation
         float timbreMod = 0.0f;              // Plaits oscillator timbre modulation
         float morphMod = 0.0f;               // Plaits oscillator morph modulation
-        float volume = 1.0f;                 // Patch volume        
+        float volume = 1.0f;                 // Patch volume
         float balance = 0.0f;                // Balance between main/aux outputs of the Plaits oscillator. 0.0f = main only, 1.0f = aux only
-        float filterCutoff = 19200.0f;       // Master filter cutoff in Hz
+        float filterCutoff = 19200;          // Master filter cutoff in Hz
         float filterResonance = 1.0f;        // Master filter resonance
         float filterDrive = 1.0f;            // Master filter drive
         bool portamentoOn = false;           // Is portamento enabled (this might get removed)
@@ -31,6 +39,8 @@ namespace TeensySynth
         float reverbSize = 0.7f;             // Master reverb room size
         float reverbDepth = 0.1f;            // Master reverb amount
         float chorusDepth = MIX_LEVEL;       // Master chorus amount
+        bool useExtEnvelope = false;         // Use ADSR envelope instead of Plaits' internal
+        Envelope ampEnvelope = {10.0f, 1.0f, 1.0f, 2.0f};
     };
 
 } // namespace TeensySynth

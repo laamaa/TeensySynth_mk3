@@ -8,6 +8,7 @@
 #include "dsp/filter_moog_f32.h"
 #include "dsp/effect_ensemble_f32.h"
 #include "dsp/effect_freeverb_f32.h"
+#include "dsp/effect_envelope_f32.h"
 #include <OpenAudio_ArduinoLibrary.h>
 
 namespace TeensySynth
@@ -224,6 +225,7 @@ namespace TeensySynth
         //Audio signal path components
         AudioSynthPlaits_F32 waveform[NVOICES];
         AudioMixer4_F32 amp[NVOICES];
+        AudioEffectEnvelope_F32 env[NVOICES];
         AudioMixer8_F32 mixOsc;
         AudioFilterBiquad_F32 fxReverbHighpass;
         AudioEffectFreeverbStereo_F32 *fxReverb; //Reverb is initialized dynamically in order to get the big buffers in RAM2
@@ -237,7 +239,8 @@ namespace TeensySynth
 
         //Pointers for audio signal path connections
         AudioConnection_F32 *patchOscAmp[NVOICES * 2];
-        AudioConnection_F32 *patchAmpMix[NVOICES];
+        AudioConnection_F32 *patchAmpEnv[NVOICES];
+        AudioConnection_F32 *patchEnvMix[NVOICES];
         AudioConnection_F32 *patchMixOscMixChorus;
         AudioConnection_F32 *patchMixOscFxReverbHighpass;
         AudioConnection_F32 *patchFxReverbHighpassFxReverb;
@@ -263,6 +266,7 @@ namespace TeensySynth
         {
             AudioSynthPlaits_F32 *wf;
             AudioMixer4_F32 *amp;
+            AudioEffectEnvelope_F32 *env;
             int8_t note;
             uint8_t velocity;
         };

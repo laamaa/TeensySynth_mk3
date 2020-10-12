@@ -205,22 +205,22 @@ namespace TeensySynth
             break;
         case CTL_FLT_CUTOFF:
             newValue = 30 + 12 * powf((value / 101.53), 3);
-            if (valueInLatchRange(newValue, ts->getFilterCutoff()))
-            {
-                // The filter has a pretty nasty self-oscillation in higher frequencies when the Q is large enough, trying to prevent this..
-                if (ts->getFilterResonance() > 3.07 && newValue > 10000)
-                    ts->setFilterResonance(3.0f);
-                ts->setFilterCutoff(newValue);
-            }
+            //if (valueInLatchRange(newValue, ts->getFilterCutoff()))
+            //{
+            // The filter has a pretty nasty self-oscillation in higher frequencies when the Q is large enough, trying to prevent this..
+            if (ts->getFilterResonance() > 3.07 && newValue > 10000)
+                ts->setFilterResonance(3.0f);
+            ts->setFilterCutoff(newValue);
+            //}
             break;
         case CTL_FLT_RESO:
             newValue = ((float)value / 1023.0f) * 4.0f;
-            if (valueInLatchRange(newValue, ts->getFilterResonance()))
-            {
-                if (ts->getFilterCutoff() > 10000 && newValue > 3.0)
-                    newValue = 3.0f;
-                ts->setFilterResonance(newValue);
-            }
+            //if (valueInLatchRange(newValue, ts->getFilterResonance()))
+            //{
+            if (ts->getFilterCutoff() > 10000 && newValue > 3.0)
+                newValue = 3.0f;
+            ts->setFilterResonance(newValue);
+            //}
             break;
         default:
             break;

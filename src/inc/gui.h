@@ -28,6 +28,14 @@ namespace TeensySynth
             EVENT_OK,
         };
 
+        enum MenuItems
+        {
+            MENU_LOADPRESET = 0,
+            MENU_SAVEPRESET,
+            MENU_MIDICH,
+            MENU_SAVETOFLASH
+        };
+
         //Initialize OneBitDisplay library
         void init();
 

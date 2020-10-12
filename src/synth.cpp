@@ -12,7 +12,8 @@ namespace TeensySynth
         {
             delete patchOscAmp[i + NVOICES];
             delete patchOscAmp[i];
-            delete patchAmpMix[i];
+            delete patchEnvMix[i];
+            delete patchAmpEnv[i];
         }
         delete patchMixOscMixChorus;
         delete patchMixOscFxReverbHighpass;
@@ -36,12 +37,14 @@ namespace TeensySynth
         for (int i = 0; i < NVOICES; i++)
         {
             //Store pointers for oscillator components
-            oscs[i] = Oscillator({&waveform[i], &amp[i], -1, 0});
+            oscs[i] = Oscillator({&waveform[i], &amp[i], &env[i], -1, 0});
 
             //Create audio signal path for voice components
             patchOscAmp[i] = new AudioConnection_F32(waveform[i], 0, amp[i], 0);           //Main output connection
             patchOscAmp[i + NVOICES] = new AudioConnection_F32(waveform[i], 1, amp[i], 1); //Aux output connection
-            patchAmpMix[i] = new AudioConnection_F32(amp[i], 0, mixOsc, i);
+            //patchAmpEnv[i] = new AudioConnection_F32(amp[i], env[i]);
+            patchAmpEnv[i] = new AudioConnection_F32(amp[i],0, mixOsc,i);
+            //patchEnvMix[i] = new AudioConnection_F32(env[i], 0, mixOsc, i);
         }
 
         //Create audio signal path for master & fx
@@ -94,7 +97,7 @@ namespace TeensySynth
     {
         //Allocate audio memory. Floating point and integer versions need their own blocks.
         AudioMemory(2);                   //I2S output objects require 2 blocks of I16 audiomemory
-        AudioMemory_F32(2 * NVOICES + 3); //Each synth voice requires 2 blocks of F32 audiomemory and the rest of fx chain needs 3 in addition
+        AudioMemory_F32(2 * NVOICES + 5); //Each synth voice requires 2 blocks of F32 audiomemory and the rest of fx chain needs 3 in addition
         delay(500);
 
 #if SYNTH_DEBUG > 0
@@ -144,22 +147,7 @@ namespace TeensySynth
         currentPatch.polyOn = true;
 
         Oscillator *o = oscs;
-        if (currentPatch.portamentoOn)
-        {
-            if (currentPatch.portamentoTime == 0 || portamentoPos < 0)
-            {
-                portamentoPos = note;
-                portamentoDir = 0;
-            }
-            else if (portamentoPos > -1)
-            {
-                portamentoDir = note > portamentoPos ? 1 : -1;
-                portamentoStep = fabs(note - portamentoPos) / (currentPatch.portamentoTime);
-            }
-            *notesOn = -1;
-            oscOn(*o, note, velocity);
-        }
-        else if (currentPatch.polyOn)
+        if (currentPatch.polyOn)
         {
             Oscillator *curOsc = 0, *end = oscs + NVOICES;
             if (sustainPressed && notesFind(notesOn, note))
@@ -194,6 +182,7 @@ namespace TeensySynth
         }
         else
         {
+            // Poly mode is off
             *notesOn = -1;
             oscOn(*o, note, velocity);
         }
@@ -336,6 +325,7 @@ namespace TeensySynth
             osc.wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::note, note);
             osc.wf->setModulationsParameter(AudioSynthPlaits_F32::Parameters::trigger, 1.0f);
             osc.wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::decay, currentPatch.decay * v);
+            osc.env->noteOn();
             notesAdd(notesOn, note);
             // osc.amp->gain(GAIN_OSC * v);
             osc.velocity = velocity;
@@ -350,6 +340,7 @@ namespace TeensySynth
         osc.velocity = 0;
         osc.wf->setModulationsParameter(AudioSynthPlaits_F32::Parameters::trigger, 0.0f);
         osc.wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::decay, 0.0f);
+        osc.env->noteOff();
     }
 
     void Synth::allOff()
@@ -387,6 +378,12 @@ namespace TeensySynth
             o->wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::morphModulationAmount, currentPatch.morphMod);
             o->wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::timbreModulationAmount, currentPatch.timbreMod);
             o->wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::frequencyModulationAmount, currentPatch.freqMod);
+            o->wf->setModulationsParameter(AudioSynthPlaits_F32::Parameters::levelPatched, currentPatch.useExtEnvelope);
+            o->env->setAttack(currentPatch.ampEnvelope.attack);
+            o->env->setDecay(currentPatch.ampEnvelope.decay);
+            o->env->setSustain(currentPatch.ampEnvelope.sustain);
+            o->env->setRelease(currentPatch.ampEnvelope.release);
+            o->env->bypass = !currentPatch.useExtEnvelope;
         } while (++o < end);
     }
 

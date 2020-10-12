@@ -137,7 +137,7 @@ namespace TeensySynth
         {
             if (menuIsOpen)
             {
-                if (currentMenuItem == 0)
+                if (currentMenuItem == MENU_LOADPRESET)
                 {
                     //Load preset
 #if SYNTH_DEBUG > 0
@@ -145,13 +145,17 @@ namespace TeensySynth
 #endif
                     ts->loadPreset(setting[0]);
                 }
-                if (currentMenuItem == 1)
+                if (currentMenuItem == MENU_SAVEPRESET)
                 {
                     //Save preset
 #if SYNTH_DEBUG > 0
                     Serial.printf("Save preset %d", setting[1]);
 #endif
                     ts->savePreset(setting[1]);
+                }
+                if (currentMenuItem == MENU_SAVETOFLASH)
+                {
+                    
                 }
             }
         }
