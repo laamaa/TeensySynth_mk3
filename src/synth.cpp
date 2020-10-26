@@ -42,9 +42,9 @@ namespace TeensySynth
             //Create audio signal path for voice components
             patchOscAmp[i] = new AudioConnection_F32(waveform[i], 0, amp[i], 0);           //Main output connection
             patchOscAmp[i + NVOICES] = new AudioConnection_F32(waveform[i], 1, amp[i], 1); //Aux output connection
-            //patchAmpEnv[i] = new AudioConnection_F32(amp[i], env[i]);
-            patchAmpEnv[i] = new AudioConnection_F32(amp[i],0, mixOsc,i);
-            //patchEnvMix[i] = new AudioConnection_F32(env[i], 0, mixOsc, i);
+            patchAmpEnv[i] = new AudioConnection_F32(amp[i], env[i]);
+            //patchAmpEnv[i] = new AudioConnection_F32(amp[i], 0, mixOsc, i);
+            patchEnvMix[i] = new AudioConnection_F32(env[i], 0, mixOsc, i);
         }
 
         //Create audio signal path for master & fx
@@ -112,14 +112,20 @@ namespace TeensySynth
         // Check flash data version and load settings / presets if ok
         if (FORCE_INITIALIZE_FLASH == 0 && checkFlash() == true)
         {
+            //Load Presets from flash
             EEPROM.get(sizeof(uint16_t), preset);
-            loadPreset(0);
+            loadPreset(0);            
+            settings->loadSettings(settingsOffset);
         }
         else
         {
+            #if SYNTH_DEBUG > 0
+                Serial.println(F("Initializing flash data"));
+            #endif
             EEPROM.put(0, memVersion);
             EEPROM.put(sizeof(int16_t), preset);
-            EEPROM.put(settingsOffset, settings);
+            settings->saveSettings(settingsOffset);
+            
         }
     }
 
@@ -136,11 +142,15 @@ namespace TeensySynth
         CONSTRAIN(newPreset, 0, PRESETS - 1);
         preset[newPreset] = currentPatch;
         activePresetNumber = newPreset;
-        //flashMan.savePatchesToFlash(&preset);
         EEPROM.put(sizeof(int16_t), preset);
     }
 
-    //Handles MIDI note on events
+    void Synth::saveSettings()
+    {
+        settings->saveSettings(settingsOffset);
+    }
+
+    //Handles note on events
     void Synth::noteOn(uint8_t channel, uint8_t note, uint8_t velocity)
     {
         notesAdd(notesPressed, note);
@@ -198,46 +208,7 @@ namespace TeensySynth
             return 0;
 
         Oscillator *o = oscs;
-        if (currentPatch.portamentoOn)
-        {
-            if (o->note == note)
-            {
-                if (lastNote != -1)
-                {
-                    notesDel(notesOn, note);
-                    if (currentPatch.portamentoTime == 0)
-                    {
-                        portamentoPos = lastNote;
-                        portamentoDir = 0;
-                    }
-                    else
-                    {
-                        portamentoDir = lastNote > portamentoPos ? 1 : -1;
-                        portamentoStep = fabs(lastNote - portamentoPos) / (currentPatch.portamentoTime);
-                    }
-                    oscOn(*o, lastNote, velocity);
-                }
-                else
-                {
-                    oscOff(*o);
-                    portamentoPos = -1;
-                    portamentoDir = 0;
-                }
-            }
-            if (oscs->note == note)
-            {
-                if (lastNote != -1)
-                {
-                    notesDel(notesOn, o->note);
-                    oscOn(*o, lastNote, velocity);
-                }
-                else
-                {
-                    oscOff(*o);
-                }
-            }
-        }
-        else if (currentPatch.polyOn)
+        if (currentPatch.polyOn)
         {
             Oscillator *end = oscs + NVOICES;
             do
@@ -325,9 +296,9 @@ namespace TeensySynth
             osc.wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::note, note);
             osc.wf->setModulationsParameter(AudioSynthPlaits_F32::Parameters::trigger, 1.0f);
             osc.wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::decay, currentPatch.decay * v);
-            osc.env->noteOn();
+            if (currentPatch.useExtEnvelope)
+                osc.env->noteOn();
             notesAdd(notesOn, note);
-            // osc.amp->gain(GAIN_OSC * v);
             osc.velocity = velocity;
             osc.note = note;
         }
@@ -340,7 +311,8 @@ namespace TeensySynth
         osc.velocity = 0;
         osc.wf->setModulationsParameter(AudioSynthPlaits_F32::Parameters::trigger, 0.0f);
         osc.wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::decay, 0.0f);
-        osc.env->noteOff();
+        if (currentPatch.useExtEnvelope)
+            osc.env->noteOff();
     }
 
     void Synth::allOff()
@@ -378,12 +350,20 @@ namespace TeensySynth
             o->wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::morphModulationAmount, currentPatch.morphMod);
             o->wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::timbreModulationAmount, currentPatch.timbreMod);
             o->wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::frequencyModulationAmount, currentPatch.freqMod);
+        } while (++o < end);
+    }
+
+    void Synth::updateEnvelope()
+    {
+        Oscillator *o = oscs, *end = oscs + NVOICES;
+        do
+        {
             o->wf->setModulationsParameter(AudioSynthPlaits_F32::Parameters::levelPatched, currentPatch.useExtEnvelope);
+            o->env->enabled = currentPatch.useExtEnvelope;
             o->env->setAttack(currentPatch.ampEnvelope.attack);
             o->env->setDecay(currentPatch.ampEnvelope.decay);
             o->env->setSustain(currentPatch.ampEnvelope.sustain);
             o->env->setRelease(currentPatch.ampEnvelope.release);
-            o->env->bypass = !currentPatch.useExtEnvelope;
         } while (++o < end);
     }
 
@@ -422,6 +402,7 @@ namespace TeensySynth
     void Synth::updateAll()
     {
         updateOscillator();
+        updateEnvelope();
         updateDecay();
         updateOscillatorBalance();
         updateFilter();

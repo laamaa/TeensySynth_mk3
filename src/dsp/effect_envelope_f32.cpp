@@ -4,6 +4,8 @@
 
 void AudioEffectEnvelope_F32::noteOn()
 {
+    if (!enabled)
+        return;
     __disable_irq();
     if (attackCount > 0)
     {
@@ -31,19 +33,16 @@ void AudioEffectEnvelope_F32::noteOn()
 
 void AudioEffectEnvelope_F32::noteOff()
 {
-    __disable_irq();
-    if (state == envelopeState::envIdle)
-    {
-        // Do nothing if envelope is idle
-        __enable_irq();
+    if (!enabled || state == envelopeState::envIdle)
         return;
-    }
+    __disable_irq();
     // Sustain is done, go to release
+#if FXDEBUG > 0
+    Serial.println(F("Envelope: release"));
+#endif
     state = envRelease;
     count = releaseCount;
-    currentLevel = sustainLevel;
-    coeff = calculateCoeff(prettyLowValue, sustainLevel, releaseMillis);
-
+    coeff = calculateCoeff(prettyLowValue, currentLevel, releaseMillis);
     __enable_irq();
 }
 
@@ -56,7 +55,7 @@ void AudioEffectEnvelope_F32::update()
     if (!block)
         return;
 
-    if (!bypass)
+    if (this->enabled == true)
     {
         if (state == envIdle)
         {

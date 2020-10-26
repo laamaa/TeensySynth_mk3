@@ -34,6 +34,8 @@ namespace TeensySynth
         // Store current synth parameters to preset-table
         void savePreset(uint8_t newPreset);
 
+        void saveSettings();
+
         // Initialize default values for audio signal path components
         void resetAll();
 
@@ -159,7 +161,7 @@ namespace TeensySynth
         // Set frequency modulation amount. Range: 0.0f-1.0f.
         inline void setFreqMod(float freqMod)
         {
-            CONSTRAIN(freqMod, 0.0f, 1.0f);
+            CONSTRAIN(freqMod, -1.0f, 1.0f);
             currentPatch.freqMod = freqMod;
             updateOscillator();
         }
@@ -168,16 +170,23 @@ namespace TeensySynth
         // Set timbre modulation amount. Range: 0.0f-1.0f.
         inline void setTimbreMod(float timbreMod)
         {
-            CONSTRAIN(timbreMod, 0.0f, 1.0f);
+            CONSTRAIN(timbreMod, -1.0f, 1.0f);
             currentPatch.timbreMod = timbreMod;
             updateOscillator();
         }
         inline float getTimbreMod() { return currentPatch.timbreMod; }
 
+        inline void setUseExtEnvelope(bool useExtEnvelope)
+        {
+            currentPatch.useExtEnvelope = useExtEnvelope;
+            updateEnvelope();
+        }
+        inline bool getUseExtEnvelope() { return currentPatch.useExtEnvelope; }
+
         // Set morph modulation amount. Range: 0.0f-1.0f.
         inline void setMorphMod(float morphMod)
         {
-            CONSTRAIN(morphMod, 0.0f, 1.0f);
+            CONSTRAIN(morphMod, -1.0f, 1.0f);
             currentPatch.morphMod = morphMod;
             updateOscillator();
         }
@@ -207,8 +216,6 @@ namespace TeensySynth
         AudioStream &getMasterR() { return float2Int2; }
 
         uint8_t getActivePresetNumber() { return activePresetNumber; }
-
-        char *getActivePresetName() { return currentPatch.presetName; }
 
 #if SYNTH_DEBUG > 0
         float statsCpu = 0;
@@ -288,10 +295,10 @@ namespace TeensySynth
         Patch preset[PRESETS];
 
         //Constant for checking if the flash contents match what we're expecting
-        const uint16_t memVersion = sizeof(Patch) * PRESETS + sizeof(Settings);
+        const uint16_t memVersion = sizeof(preset) + sizeof(Settings::settings_t);
 
         //Offset for reading settings from the flash (stored after memory version and patches)
-        const uint16_t settingsOffset = sizeof(uint16_t) + sizeof(Patch) * PRESETS;
+        const int settingsOffset = sizeof(uint16_t) + sizeof(preset);
 
         //Variables related to momentary information
         int8_t portamentoDir;
@@ -299,11 +306,18 @@ namespace TeensySynth
         float portamentoPos;
         bool sustainPressed;
         uint8_t activePresetNumber;
+        float pitchBend;
 
         // Maximum filter frequency, let's keep it a little below Nyquist frequency
         const float filterMaxFreq = AUDIO_SAMPLE_RATE_EXACT / 2.5;
 
-        inline void initOscillators();
+/*         inline float noteToFreq(float note)
+        {
+            // Sets all notes as an offset of A4 (#69)
+            //if (portamentoOn) note = portamentoPos;
+            return settings->getSynthTuning() * pow(2, (note - 69) / 12. + pitchBend / currentPatch.pitchScale);
+        } */
+
         void notesAdd(int8_t *notes, uint8_t note);
         int8_t notesDel(int8_t *notes, uint8_t note);
         bool notesFind(int8_t *notes, uint8_t note);
@@ -314,6 +328,7 @@ namespace TeensySynth
         Oscillator *noteOffReal(uint8_t channel, uint8_t note, uint8_t velocity, bool ignoreSustain);
         void updateFilter();
         void updateOscillator();
+        void updateEnvelope();
         void updateOscillatorBalance();
         void updateDecay();
         void updateChorusAndReverb();

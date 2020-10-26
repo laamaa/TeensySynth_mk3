@@ -28,14 +28,6 @@ namespace TeensySynth
             EVENT_OK,
         };
 
-        enum MenuItems
-        {
-            MENU_LOADPRESET = 0,
-            MENU_SAVEPRESET,
-            MENU_MIDICH,
-            MENU_SAVETOFLASH
-        };
-
         //Initialize OneBitDisplay library
         void init();
 
@@ -69,22 +61,22 @@ namespace TeensySynth
     private:
         //List of synth engine names
         char synthEngineList[16][11] = {
-            "ANALOG    ",
-            "WAVESHAPER",
-            "FM        ",
-            "GRAIN     ",
-            "ADDITIVE  ",
-            "WAVETABLE ",
-            "CHORD     ",
-            "SPEECH    ",
-            "SWARM     ",
-            "NOISE     ",
-            "PARTICLE  ",
-            "STRING    ",
-            "MODAL     ",
-            "BASSDRUM  ",
-            "SNARE     ",
-            "HIHAT     "};
+            " ANALOG ",
+            "WAVESHAP",
+            "   FM   ",
+            " GRAIN  ",
+            "ADDITIVE",
+            "WAVETABL",
+            " CHORD  ",
+            " SPEECH ",
+            " SWARM  ",
+            " NOISE  ",
+            "PARTICLE",
+            " STRING ",
+            " MODAL  ",
+            "BASSDRUM",
+            " SNARE  ",
+            " HI-HAT "};
 
         //Table for converting int to char*
         char charNumbers[17][3] = {
@@ -106,14 +98,25 @@ namespace TeensySynth
             "16",
             "  "};
 
+        char *textSaved = (char *)"Saved";
+
+        char *menuCallBackStr = (char *)"    ";
+
         // Main menu table
-        char *menu1[6];
+        char *menu1[6];     
+
+        // Pointer to currently open menu
+        char **currentMenu = menu1;
 
         // Current values in main menu items
         uint8_t setting[4] = {0, 0, 0, 0};
 
         // Time since last menu action in ms
         elapsedMillis menuTimer;
+
+        // Flash text stuff
+        elapsedMillis flashTextTimer;
+        bool showFlashText = false;
 
         // Pointer to main synth object
         Synth *ts;
@@ -134,6 +137,9 @@ namespace TeensySynth
 
         // Handle OK (enter) menu events. Takes a controller number as parameter.
         void handleMenuEventOk(uint8_t control);
+
+        void flashText(char* text);
+
     };
 
 } // namespace TeensySynth

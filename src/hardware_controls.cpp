@@ -168,20 +168,20 @@ namespace TeensySynth
             if (valueInLatchRange(newValue, ts->getLpgColour()))
                 ts->setLpgColour(newValue);
             break;
+        case CTL_FREQMOD_AMOUNT:
+            newValue = -1.0f + ((float)value / 511.5f);
+            if (valueInLatchRange(newValue, ts->getFreqMod()))
+                ts->setFreqMod(newValue);
+            break;            
         case CTL_TIMBREMOD_AMOUNT:
-            newValue = (float)value / 1023.0f;
+            newValue = -1.0f + ((float)value / 511.5f);
             if (valueInLatchRange(newValue, ts->getTimbreMod()))
                 ts->setTimbreMod(newValue);
             break;
         case CTL_MORPHMOD_AMOUNT:
-            newValue = (float)value / 1023.0f;
+            newValue = -1.0f + ((float)value / 511.5f);
             if (valueInLatchRange(newValue, ts->getMorphMod()))
                 ts->setMorphMod(newValue);
-            break;
-        case CTL_FREQMOD_AMOUNT:
-            newValue = (float)value / 1023.0f;
-            if (valueInLatchRange(newValue, ts->getFreqMod()))
-                ts->setFreqMod(newValue);
             break;
         case CTL_VOLUME:
             newValue = (float)value / 1023.0f;

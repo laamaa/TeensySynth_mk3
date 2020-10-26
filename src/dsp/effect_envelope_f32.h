@@ -56,7 +56,8 @@ public:
         releaseCount = millisToCount(release);
     }
 
-    bool bypass = false;
+    // True = process envelope, false = bypass
+    bool enabled = true;
 
     void noteOn();
     void noteOff();

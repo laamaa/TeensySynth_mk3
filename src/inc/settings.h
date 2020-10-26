@@ -2,6 +2,7 @@
 #define SETTINGS_H
 
 #include <Arduino.h>
+#include <EEPROM.h>
 
 namespace TeensySynth
 {
@@ -16,7 +17,7 @@ namespace TeensySynth
 #define NVOICES 5
 
 // Number of presets
-#define PRESETS 16
+#define PRESETS 9
 
 // Oscillator signal attenuation, happens right after the oscillator. Range = 0.0f-1.0f.
 #define OSC_LEVEL 0.6f
@@ -45,48 +46,70 @@ namespace TeensySynth
   {
 
   public:
+    // A struct of the needed variables is required in order to save/load to eeprom
+    struct settings_t
+    {
+      uint8_t midiChannel;      // Default midi channel
+      float chorusReverbLevel;  // How much reverb should be sent to chorus by default. Range = 0.0f - 1.0f
+      float reverbHighPassFreq; // Highpass filter frequency before reverb
+      bool latch;               // Enable latching for controls to prevent sudden value changes when using presets
+      float latchThreshold;
+    };
+
     // Set the synth's incoming MIDI channel
     inline void setMidiChannel(uint8_t newMidiChannel)
     {
       CONSTRAIN(newMidiChannel, 1, 16);
-      midiChannel = newMidiChannel;
+      _settings.midiChannel = newMidiChannel;
     }
-    inline uint8_t getMidiChannel() { return midiChannel; }
+    inline uint8_t getMidiChannel() { return _settings.midiChannel; }
 
     // Set how much reverb should be sent to chorus. Range = 0.0f - 1.0f.
     inline void setChorusReverbLevel(float newChorusReverbLevel)
     {
       CONSTRAIN(newChorusReverbLevel, 0.0f, 1.0f);
-      chorusReverbLevel = newChorusReverbLevel;
+      _settings.chorusReverbLevel = newChorusReverbLevel;
     }
 
-    inline float getChorusReverbLevel() { return chorusReverbLevel; }
+    inline float getChorusReverbLevel() { return _settings.chorusReverbLevel; }
 
     // Set highpass filter frequency before reverb
     inline void setReverbHighPassFreq(float newReverbHighPassFreq)
     {
       CONSTRAIN(newReverbHighPassFreq, 0.1f, 10000.0f);
-      reverbHighPassFreq = newReverbHighPassFreq;
+      _settings.reverbHighPassFreq = newReverbHighPassFreq;
     }
-    inline float getReverbHighPassFreq() { return reverbHighPassFreq; }
+    inline float getReverbHighPassFreq() { return _settings.reverbHighPassFreq; }
 
     // Set whether synth parameters should update only after they've passed their initial value
-    inline void setLatch(bool newLatch) { latch = newLatch; }
-    inline bool getLatch() { return latch; }
+    inline void setLatch(bool newLatch) { _settings.latch = newLatch; }
+    inline bool getLatch() { return _settings.latch; }
 
     inline void setLatchThreshold(bool newLatchThreshold)
     {
       CONSTRAIN(newLatchThreshold, 0.0f, 1.0f);
-      latchThreshold = newLatchThreshold;
+      _settings.latchThreshold = newLatchThreshold;
     }
-    inline float getLatchThreshold() { return latchThreshold; }
+    inline float getLatchThreshold() { return _settings.latchThreshold; }
+
+    inline void loadSettings(int memoryOffset)
+    {
+#if SYNTH_DEBUG > 0
+      Serial.println(F("Loading settings from flash"));
+#endif
+      EEPROM.get(memoryOffset, _settings);
+    }
+
+    inline void saveSettings(int memoryOffset)
+    {
+#if SYNTH_DEBUG > 0
+      Serial.println(F("Saving settings to flash"));
+#endif
+      EEPROM.put(memoryOffset, _settings);
+    }
 
   private:
-    uint8_t midiChannel = 6;           // Default midi channel
-    float chorusReverbLevel = 0.8f;    // How much reverb should be sent to chorus by default. Range = 0.0f - 1.0f
-    float reverbHighPassFreq = 150.0f; // Highpass filter frequency before reverb
-    bool latch = true;
-    float latchThreshold = 0.1f;
+    settings_t _settings = {5, 0.8f, 150.0f, true, 0.1f}; //default values
   };
 
 } // namespace TeensySynth
