@@ -174,6 +174,7 @@ namespace TeensySynth
             currentPatch.timbreMod = timbreMod;
             updateOscillator();
         }
+
         inline float getTimbreMod() { return currentPatch.timbreMod; }
 
         inline void setUseExtEnvelope(bool useExtEnvelope)

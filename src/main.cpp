@@ -13,7 +13,7 @@ Settings settings;
 Synth ts(&settings);
 GUI gui(&ts, &settings);
 HardwareControls hw(&ts, &gui, &settings);
-MidiControls midi(&ts, &settings);
+TeensySynth::MidiControls midiControls(&ts, &settings);
 //Oscilloscope oscilloscope(&ts,&gui); //unfortunately I2C is too slow for this to work nicely :((
 
 //************SETUP**************
@@ -22,13 +22,13 @@ void setup()
     ts.init();
     gui.init();
     hw.init();
-    midi.init();
+    midiControls.init();
 }
 
 //************LOOP**************
 void loop()
 {
-    midi.update();
+    midiControls.update();
     hw.update();
     gui.update();
 

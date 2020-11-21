@@ -175,7 +175,7 @@ namespace TeensySynth
                 {
                 case 0:
                     // Save preset
-                    ts->savePreset(setting[1]);
+                    ts->savePreset(setting[0]);
                     flashText(textSaved);
                     break;
                 case 1:
