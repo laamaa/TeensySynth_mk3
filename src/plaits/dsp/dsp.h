@@ -30,10 +30,12 @@
 #define PLAITS_DSP_DSP_H_
 
 #include "stmlib/stmlib.h"
+#include "core_pins.h"
+#include "AudioStream.h"
 
 namespace plaits {
   
-static const float kSampleRate = 48000.0f;
+static const float kSampleRate = AUDIO_SAMPLE_RATE_EXACT;
 
 // There is no proper PLL for I2S, only a divider on the system clock to derive
 // the bit clock.
@@ -45,11 +47,11 @@ static const float kSampleRate = 48000.0f;
 // That's only 4.6 cts of error, but we care!
 
 //static const float kCorrectedSampleRate = 47872.34f;
-static const float kCorrectedSampleRate = 48000.0f;
+static const float kCorrectedSampleRate = AUDIO_SAMPLE_RATE_EXACT;
 const float a0 = (440.0f / 8.0f) / kCorrectedSampleRate;
 
-const size_t kMaxBlockSize = 128;
-const size_t kBlockSize = 128;
+const size_t kMaxBlockSize = AUDIO_BLOCK_SAMPLES;
+const size_t kBlockSize = AUDIO_BLOCK_SAMPLES;
 
 }  // namespace plaits
 

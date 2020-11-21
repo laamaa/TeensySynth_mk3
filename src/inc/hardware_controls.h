@@ -13,13 +13,14 @@ namespace TeensySynth
     class HardwareControls
     {
     public:
-        HardwareControls(Synth *tsPointer, GUI *guiPointer)
+        HardwareControls(Synth *ptrSynth, GUI *ptrGui, Settings *ptrSettings)
         {
-            ts = tsPointer;
-            gui = guiPointer;
+            ts = ptrSynth;
+            gui = ptrGui;
+            settings = ptrSettings;
         }
 
-        void update()
+        inline void update()
         {
             checkControlValues(true);
         }
@@ -34,7 +35,7 @@ namespace TeensySynth
         const uint8_t muxValuePin = 14;
 
         //Teensy pins where rotary encoders are connected. First two in array are the encoder pins, 3. is the encoder push button
-        const uint8_t rotaryPin[2][3] = {{8, 9, 10}, {11, 12, 15}};
+        const uint8_t rotaryPin[2][3] = {{8, 9, 10}, {12, 11, 15}};
 
         //HW control layout enum: potentiometers first (left to right, top to bottom), encoders second and switches last
         enum HwControl
@@ -82,32 +83,35 @@ namespace TeensySynth
             {1, 1, 1, 1}  //channel 15
         };
 
-        //Pointer to the synth controller
+        // Pointer to the synth controller
         Synth *ts;
 
-        //Pointer to GUI (display) controller
+        // Pointer to GUI (display) controller
         GUI *gui;
 
-        //We use Teensy's encoder library to make working with the encoders easier
+        // Pointer to Settings controller
+        Settings *settings;
+
+        // Use Teensy's encoder library to make working with the encoders easier
         Encoder *encoder[2];
 
-        //Create bounce library instances for handling button presses
+        // Create bounce library instances for handling button presses
         Bounce button[2] = {Bounce()};
 
-        //Current pot/switch readings
+        // Current pot/switch readings
         int16_t currentCtlValue[LAST_CTL];
 
-        //Encoders are so crappy that we need to have special treatment for them
+        // Current encoders in the synth hw give out non-standard readings so we need to have special treatment for them
         int16_t encValue[2];
 
         /* Thresholds for updating parameters from potentiometer readings
-         * The default value is defined in settings.h, but this is also an array 
-         * so that we can change thresholds also individually if there is a single noisy pot 
+         * The default value is defined in settings.h, but this is also an array
+         * so that we can change thresholds also individually if there is a single noisy pot
          */
         uint8_t potThreshold[LAST_CTL];
 
-        //Switch multiplexer channel and read a value
-        uint16_t readMux(uint8_t ch)
+        // Switch multiplexer channel and read a value
+        inline uint16_t readMux(uint8_t ch)
         {
             for (int i = 0; i < 4; i++)
                 digitalWrite(muxControlPin[i], muxChannel[ch][i]);
@@ -115,12 +119,19 @@ namespace TeensySynth
             return analogRead(muxValuePin);
         }
 
-        //Sends the control changes to the synth engine
+        // Sends the control changes to the synth engine
         void updateTeensySynth(uint8_t ctl, int value);
 
+        // Check encoder readings. Sorry for this mess.
         void readAndProcessPotentiometers(bool update);
         void readAndProcessEncoders(bool update);
         void checkControlValues(bool update);
+
+        // Return true if latch is disabled or value is inside the latch threshold range
+        inline bool valueInLatchRange(float newValue, float originalValue)
+        {
+            return (!settings->getLatch() || (newValue > originalValue - settings->getLatchThreshold() && newValue < originalValue + settings->getLatchThreshold()));
+        }
     };
 } // namespace TeensySynth
 

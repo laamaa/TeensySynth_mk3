@@ -18,7 +18,7 @@ BOARD_ID         := TEENSY40
 MCU              := imxrt1062
 
 LIBS_LOCAL_BASE  := lib
-LIBS_LOCAL       := Audio Encoder SD SerialFlash SPI Wire OpenAudio_ArduinoLibrary OneBitDisplay BitBang_I2C Bounce2
+LIBS_LOCAL       := Audio Encoder SD SerialFlash SPI Wire OpenAudio_ArduinoLibrary OneBitDisplay BitBang_I2C Bounce2 EEPROM MIDI
 
 CORE_BASE        := core
 GCC_BASE         := C:\PROGRA~2\Arduino\hardware\tools\arm\bin
@@ -42,7 +42,7 @@ FLAGS_LD    := -Wl,--print-memory-usage,--gc-sections,--relax,--defsym=__rtc_loc
 LIBS        := -larm_cortexM7lfsp_math -lm -lstdc++
 
 DEFINES     := -D__IMXRT1062__ -DTEENSYDUINO=153 -DARDUINO_TEENSY40 -DARDUINO=10807
-DEFINES     += -DF_CPU=600000000 -DUSB_MIDI -DLAYOUT_FINNISH
+DEFINES     += -DF_CPU=720000000 -DUSB_MIDI -DLAYOUT_FINNISH
 
 CPP_FLAGS   := $(FLAGS_CPU) $(FLAGS_OPT) $(FLAGS_COM) $(DEFINES) $(FLAGS_CPP)
 C_FLAGS     := $(FLAGS_CPU) $(FLAGS_OPT) $(FLAGS_COM) $(DEFINES) $(FLAGS_C)

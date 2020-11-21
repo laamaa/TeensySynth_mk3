@@ -2,18 +2,18 @@
 #include <Arduino.h>
 #include "inc/settings.h"
 #include "inc/synth.h"
-#include "inc/hardware_controls.h"
 #include "inc/gui.h"
 //#include "inc/oscilloscope.h"
-#include "inc/progmem_strings.h"
+#include "inc/hardware_controls.h"
 #include "inc/midi_controls.h"
 
 using namespace TeensySynth;
 
-Synth ts;
-GUI gui(&ts);
-HardwareControls hw(&ts, &gui);
-MidiControls midi(&ts);
+Settings settings;
+Synth ts(&settings);
+GUI gui(&ts, &settings);
+HardwareControls hw(&ts, &gui, &settings);
+TeensySynth::MidiControls midiControls(&ts, &settings);
 //Oscilloscope oscilloscope(&ts,&gui); //unfortunately I2C is too slow for this to work nicely :((
 
 //************SETUP**************
@@ -22,13 +22,13 @@ void setup()
     ts.init();
     gui.init();
     hw.init();
-    midi.init();
+    midiControls.init();
 }
 
 //************LOOP**************
 void loop()
 {
-    midi.update();
+    midiControls.update();
     hw.update();
     gui.update();
 

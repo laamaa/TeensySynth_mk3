@@ -12,7 +12,7 @@ namespace TeensySynth
     class GUI
     {
     public:
-        GUI(TeensySynth::Synth *tsPointer);
+        GUI(TeensySynth::Synth *ptrSynth, TeensySynth::Settings *ptrSettings);
 
         //Does the display need to be refreshed?
         bool updateDisplay = true;
@@ -61,22 +61,22 @@ namespace TeensySynth
     private:
         //List of synth engine names
         char synthEngineList[16][11] = {
-            "ANALOG    ",
-            "WAVESHAPER",
-            "FM        ",
-            "GRAIN     ",
-            "ADDITIVE  ",
-            "WAVETABLE ",
-            "CHORD     ",
-            "SPEECH    ",
-            "SWARM     ",
-            "NOISE     ",
-            "PARTICLE  ",
-            "STRING    ",
-            "MODAL     ",
-            "BASSDRUM  ",
-            "SNARE     ",
-            "HIHAT     "};
+            " ANALOG ",
+            "WAVESHAP",
+            "   FM   ",
+            " GRAIN  ",
+            "ADDITIVE",
+            "WAVETABL",
+            " CHORD  ",
+            " SPEECH ",
+            " SWARM  ",
+            " NOISE  ",
+            "PARTICLE",
+            " STRING ",
+            " MODAL  ",
+            "BASSDRUM",
+            " SNARE  ",
+            " HI-HAT "};
 
         //Table for converting int to char*
         char charNumbers[17][3] = {
@@ -98,31 +98,48 @@ namespace TeensySynth
             "16",
             "  "};
 
-        //Main menu table
-        char *menu1[6];
+        char *textSaved = (char *)"Saved";
 
-        //Current values in main menu items
+        char *menuCallBackStr = (char *)"    ";
+
+        // Main menu table
+        char *menu1[6];     
+
+        // Pointer to currently open menu
+        char **currentMenu = menu1;
+
+        // Current values in main menu items
         uint8_t setting[4] = {0, 0, 0, 0};
 
-        //Time since last menu action in ms
+        // Time since last menu action in ms
         elapsedMillis menuTimer;
 
-        //Pointer to main synth object
+        // Flash text stuff
+        elapsedMillis flashTextTimer;
+        bool showFlashText = false;
+
+        // Pointer to main synth object
         Synth *ts;
 
-        //Objects needed by OneBitDisplay library
+        // Pointer to settings object
+        Settings *settings;
+
+        // Objects needed by OneBitDisplay library
         SIMPLEMENU sm;
         OBDISP obd;
         uint8_t pBuffer[1024]; //display buffer
 
-        //Currently selected menu item
+        // Currently selected menu item
         int8_t currentMenuItem = -1;
 
-        //Should the main menu be initialized when opening?
+        // Should the main menu be initialized when opening?
         bool menuIsInitialized = false;
 
-        //Handle OK (enter) menu events. Takes a controller number as parameter.
+        // Handle OK (enter) menu events. Takes a controller number as parameter.
         void handleMenuEventOk(uint8_t control);
+
+        void flashText(char* text);
+
     };
 
 } // namespace TeensySynth

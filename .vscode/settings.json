@@ -1,6 +1,15 @@
 {
     "files.associations": {
         "*.tcc": "cpp",
-        "random": "cpp"
+        "random": "cpp",
+        "istream": "cpp",
+        "ostream": "cpp",
+        "sstream": "cpp",
+        "deque": "cpp",
+        "string": "cpp",
+        "unordered_map": "cpp",
+        "vector": "cpp",
+        "array": "cpp",
+        "initializer_list": "cpp"
     }
 }

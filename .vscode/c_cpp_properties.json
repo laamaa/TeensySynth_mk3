@@ -15,7 +15,9 @@
         "lib/Wire/**",
         "lib/OneBitDisplay/src/**",
         "lib/BitBang_I2C/src/**",
-        "lib/Bounce2/**"
+        "lib/Bounce2/**",
+        "lib/EEPROM/**",
+        "lib/MIDI/**"
       ],
       "forcedInclude": [],
       "defines": [

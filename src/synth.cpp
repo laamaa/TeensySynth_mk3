@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "inc/synth.h"
 #include "inc/settings.h"
+#include <EEPROM.h>
 
 namespace TeensySynth
 {
@@ -11,7 +12,8 @@ namespace TeensySynth
         {
             delete patchOscAmp[i + NVOICES];
             delete patchOscAmp[i];
-            delete patchAmpMix[i];
+            delete patchEnvMix[i];
+            delete patchAmpEnv[i];
         }
         delete patchMixOscMixChorus;
         delete patchMixOscFxReverbHighpass;
@@ -30,18 +32,19 @@ namespace TeensySynth
         //delete fxReverb;
     }
 
-    //Create patch for Teensy audio library components
     void Synth::createAudioPatch()
     {
         for (int i = 0; i < NVOICES; i++)
         {
             //Store pointers for oscillator components
-            oscs[i] = Oscillator({&waveform[i], &amp[i], -1, 0});
+            oscs[i] = Oscillator({&waveform[i], &amp[i], &env[i], -1, 0});
 
             //Create audio signal path for voice components
             patchOscAmp[i] = new AudioConnection_F32(waveform[i], 0, amp[i], 0);           //Main output connection
             patchOscAmp[i + NVOICES] = new AudioConnection_F32(waveform[i], 1, amp[i], 1); //Aux output connection
-            patchAmpMix[i] = new AudioConnection_F32(amp[i], 0, mixOsc, i);
+            patchAmpEnv[i] = new AudioConnection_F32(amp[i], env[i]);
+            //patchAmpEnv[i] = new AudioConnection_F32(amp[i], 0, mixOsc, i);
+            patchEnvMix[i] = new AudioConnection_F32(env[i], 0, mixOsc, i);
         }
 
         //Create audio signal path for master & fx
@@ -66,12 +69,35 @@ namespace TeensySynth
         patchConverterI2s[1] = new AudioConnection(float2Int2, 0, i2s1, 1);
     }
 
-    //Inititializes audio signal path and default values for its components
+    bool Synth::checkFlash()
+    {
+        uint16_t memVersionFlash;
+
+#if SYNTH_DEBUG > 0
+        Serial.print("Checking flash data version: ");
+#endif
+
+        EEPROM.get(0, memVersionFlash);
+
+#if SYNTH_DEBUG > 0
+        Serial.println(memVersionFlash);
+#endif
+
+        if (memVersionFlash == memVersion)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     void Synth::init()
     {
         //Allocate audio memory. Floating point and integer versions need their own blocks.
         AudioMemory(2);                   //I2S output objects require 2 blocks of I16 audiomemory
-        AudioMemory_F32(2 * NVOICES + 3); //Each synth voice requires 2 blocks of F32 audiomemory and the rest of fx chain needs 3 in addition
+        AudioMemory_F32(2 * NVOICES + 5); //Each synth voice requires 2 blocks of F32 audiomemory and the rest of fx chain needs 3 in addition
         delay(500);
 
 #if SYNTH_DEBUG > 0
@@ -82,34 +108,56 @@ namespace TeensySynth
 
         createAudioPatch();
         resetAll();
+
+        // Check flash data version and load settings / presets if ok
+        if (FORCE_INITIALIZE_FLASH == 0 && checkFlash() == true)
+        {
+            //Load Presets from flash
+            EEPROM.get(sizeof(uint16_t), preset);
+            loadPreset(0);            
+            settings->loadSettings(settingsOffset);
+        }
+        else
+        {
+            #if SYNTH_DEBUG > 0
+                Serial.println(F("Initializing flash data"));
+            #endif
+            EEPROM.put(0, memVersion);
+            EEPROM.put(sizeof(int16_t), preset);
+            settings->saveSettings(settingsOffset);
+            
+        }
     }
 
-    //Handles MIDI note on events
+    void Synth::loadPreset(uint8_t newPreset)
+    {
+        CONSTRAIN(newPreset, 0, PRESETS - 1);
+        currentPatch = preset[newPreset];
+        activePresetNumber = newPreset;
+        updateAll();
+    }
+
+    void Synth::savePreset(uint8_t newPreset)
+    {
+        CONSTRAIN(newPreset, 0, PRESETS - 1);
+        preset[newPreset] = currentPatch;
+        activePresetNumber = newPreset;
+        EEPROM.put(sizeof(int16_t), preset);
+    }
+
+    void Synth::saveSettings()
+    {
+        settings->saveSettings(settingsOffset);
+    }
+
+    //Handles note on events
     void Synth::noteOn(uint8_t channel, uint8_t note, uint8_t velocity)
     {
-        if (omniOn || channel != SYNTH_MIDICHANNEL)
-            return;
-
         notesAdd(notesPressed, note);
         currentPatch.polyOn = true;
 
         Oscillator *o = oscs;
-        if (currentPatch.portamentoOn)
-        {
-            if (currentPatch.portamentoTime == 0 || portamentoPos < 0)
-            {
-                portamentoPos = note;
-                portamentoDir = 0;
-            }
-            else if (portamentoPos > -1)
-            {
-                portamentoDir = note > portamentoPos ? 1 : -1;
-                portamentoStep = fabs(note - portamentoPos) / (currentPatch.portamentoTime);
-            }
-            *notesOn = -1;
-            oscOn(*o, note, velocity);
-        }
-        else if (currentPatch.polyOn)
+        if (currentPatch.polyOn)
         {
             Oscillator *curOsc = 0, *end = oscs + NVOICES;
             if (sustainPressed && notesFind(notesOn, note))
@@ -144,6 +192,7 @@ namespace TeensySynth
         }
         else
         {
+            // Poly mode is off
             *notesOn = -1;
             oscOn(*o, note, velocity);
         }
@@ -153,55 +202,13 @@ namespace TeensySynth
 
     Synth::Oscillator *Synth::noteOffReal(uint8_t channel, uint8_t note, uint8_t velocity, bool ignoreSustain)
     {
-        if (!omniOn && channel != SYNTH_MIDICHANNEL)
-            return 0;
-
         int8_t lastNote = notesDel(notesPressed, note);
 
         if (sustainPressed && !ignoreSustain)
             return 0;
 
         Oscillator *o = oscs;
-        if (currentPatch.portamentoOn)
-        {
-            if (o->note == note)
-            {
-                if (lastNote != -1)
-                {
-                    notesDel(notesOn, note);
-                    if (currentPatch.portamentoTime == 0)
-                    {
-                        portamentoPos = lastNote;
-                        portamentoDir = 0;
-                    }
-                    else
-                    {
-                        portamentoDir = lastNote > portamentoPos ? 1 : -1;
-                        portamentoStep = fabs(lastNote - portamentoPos) / (currentPatch.portamentoTime);
-                    }
-                    oscOn(*o, lastNote, velocity);
-                }
-                else
-                {
-                    oscOff(*o);
-                    portamentoPos = -1;
-                    portamentoDir = 0;
-                }
-            }
-            if (oscs->note == note)
-            {
-                if (lastNote != -1)
-                {
-                    notesDel(notesOn, o->note);
-                    oscOn(*o, lastNote, velocity);
-                }
-                else
-                {
-                    oscOff(*o);
-                }
-            }
-        }
-        else if (currentPatch.polyOn)
+        if (currentPatch.polyOn)
         {
             Oscillator *end = oscs + NVOICES;
             do
@@ -283,17 +290,15 @@ namespace TeensySynth
     void Synth::oscOn(Oscillator &osc, int8_t note, uint8_t velocity)
     {
         float v = currentPatch.velocityOn ? velocity / 127. : 1;
+        CONSTRAIN(v, 0.8f, 1.0f);
         if (osc.note != note)
         {
             osc.wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::note, note);
             osc.wf->setModulationsParameter(AudioSynthPlaits_F32::Parameters::trigger, 1.0f);
-            osc.wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::decay, currentPatch.decay);
+            osc.wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::decay, currentPatch.decay * v);
+            if (currentPatch.useExtEnvelope)
+                osc.env->noteOn();
             notesAdd(notesOn, note);
-            if (!osc.velocity)
-            {
-                // osc.flt_env->noteOn();
-            }
-            // osc.amp->gain(GAIN_OSC * v);
             osc.velocity = velocity;
             osc.note = note;
         }
@@ -306,6 +311,8 @@ namespace TeensySynth
         osc.velocity = 0;
         osc.wf->setModulationsParameter(AudioSynthPlaits_F32::Parameters::trigger, 0.0f);
         osc.wf->setPatchParameter(AudioSynthPlaits_F32::Parameters::decay, 0.0f);
+        if (currentPatch.useExtEnvelope)
+            osc.env->noteOff();
     }
 
     void Synth::allOff()
@@ -346,6 +353,20 @@ namespace TeensySynth
         } while (++o < end);
     }
 
+    void Synth::updateEnvelope()
+    {
+        Oscillator *o = oscs, *end = oscs + NVOICES;
+        do
+        {
+            o->wf->setModulationsParameter(AudioSynthPlaits_F32::Parameters::levelPatched, currentPatch.useExtEnvelope);
+            o->env->enabled = currentPatch.useExtEnvelope;
+            o->env->setAttack(currentPatch.ampEnvelope.attack);
+            o->env->setDecay(currentPatch.ampEnvelope.decay);
+            o->env->setSustain(currentPatch.ampEnvelope.sustain);
+            o->env->setRelease(currentPatch.ampEnvelope.release);
+        } while (++o < end);
+    }
+
     void Synth::updateDecay()
     {
         Oscillator *o = oscs, *end = oscs + NVOICES;
@@ -361,8 +382,8 @@ namespace TeensySynth
         Oscillator *o = oscs, *end = oscs + NVOICES;
         do
         {
-            o->amp->gain(0, OSC_LEVEL - currentPatch.balance);
-            o->amp->gain(1, currentPatch.balance);
+            o->amp->gain(0, (OSC_LEVEL - currentPatch.balance) * currentPatch.volume);
+            o->amp->gain(1, currentPatch.balance * currentPatch.volume);
         } while (++o < end);
     }
 
@@ -375,7 +396,17 @@ namespace TeensySynth
         mixMasterR.gain(0, MIX_LEVEL - currentPatch.reverbDepth);                              //dry signal R
         mixMasterR.gain(1, currentPatch.chorusDepth * (MIX_LEVEL - currentPatch.reverbDepth)); //chorus signal R
         mixMasterR.gain(2, currentPatch.reverbDepth);                                          //reverb signal R
-        mixChorus.gain(1, CHORUS_REV_LEVEL * currentPatch.reverbDepth);                        //Reverb -> Chorus level
+        mixChorus.gain(1, settings->getChorusReverbLevel() * currentPatch.reverbDepth);        //Reverb -> Chorus level
+    }
+
+    void Synth::updateAll()
+    {
+        updateOscillator();
+        updateEnvelope();
+        updateDecay();
+        updateOscillatorBalance();
+        updateFilter();
+        updateChorusAndReverb();
     }
 
     void Synth::resetAll()
@@ -397,17 +428,14 @@ namespace TeensySynth
         mixMasterR.gain(1, MIX_LEVEL - 0.1f); //chorus signal R
         mixMasterR.gain(2, 0.1f);             //reverb signal R
 
-        fxReverbHighpass.setHighpass(0, REV_HIGHPASS); // Highpass filter before reverb
+        fxReverbHighpass.setHighpass(0, settings->getReverbHighPassFreq()); // Highpass filter before reverb
         fxReverb->roomsize(0.7f);
         fxReverb->damping(0.7f);
 
-        mixChorus.gain(0, 0.8f);             // Chorus input level
-        mixChorus.gain(1, CHORUS_REV_LEVEL); // Reverb -> Chorus level
+        mixChorus.gain(0, 0.8f);                             // Chorus input level
+        mixChorus.gain(1, settings->getChorusReverbLevel()); // Reverb -> Chorus level
 
-        updateOscillator();
-        updateOscillatorBalance();
-        updateFilter();
-        updateChorusAndReverb();
+        updateAll();
     }
 
 // Debug functions
@@ -446,16 +474,22 @@ namespace TeensySynth
     {
         switch (c)
         {
-        case '\r':
+        case 'l':
             Serial.println();
             break;
         case 's':
             // print cpu and mem usage
             Synth::printResources(statsCpu, statsMemF32, statsMemI16);
             break;
-        case '\t':
+        case 'r':
             // reboot Teensy
             *(uint32_t *)0xE000ED0C = 0x5FA0004;
+            break;
+        case 'i':
+            //initialize flash memory
+            EEPROM.put(0, memVersion);
+            EEPROM.put(sizeof(int16_t), preset);
+            EEPROM.put(settingsOffset, settings);
             break;
         default:
             break;

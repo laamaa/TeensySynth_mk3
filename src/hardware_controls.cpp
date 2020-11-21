@@ -4,8 +4,6 @@
 
 namespace TeensySynth
 {
-
-    //Check encoder readings. Sorry for this mess.
     void HardwareControls::readAndProcessEncoders(bool update)
     {
         int i, ctlValue;
@@ -16,6 +14,7 @@ namespace TeensySynth
             button[i].update();
             if (button[i].rose())
             {
+                //Send an OK/Enter event to GUI object, further handling is done there.
                 gui->menuEvent(i, GUI::EventType::EVENT_OK);
             }
 
@@ -23,7 +22,7 @@ namespace TeensySynth
             ctlValue = encoder[i]->readAndReset();
             //The crappy encoders that I bought from Aliexpress seem to be like 1 click = 4 value increments.. trying to work around that
             if (ctlValue < 0)
-            {                             
+            {
                 //If the encoder has switched directions before reaching 4 value increments, reset the value
                 if (encValue[i] < 0)
                     encValue[i] = 0;
@@ -120,6 +119,7 @@ namespace TeensySynth
 
     void HardwareControls::updateTeensySynth(uint8_t ctl, int value)
     {
+        float newValue = 0;
         switch (ctl)
         {
         case CTL_ENC_1:
@@ -129,66 +129,99 @@ namespace TeensySynth
             break;
         case CTL_ENC_2:
             //Enc2 = Load preset
-            //TODO
+            CONSTRAIN(currentCtlValue[CTL_ENC_2], 0, PRESETS - 1);
+            ts->loadPreset(currentCtlValue[CTL_ENC_2]);
             break;
         case CTL_SW_1:
+            //SW1 = mono/poly
             break;
         case CTL_SW_2:
-            break;
-        case CTL_FREQMOD_AMOUNT:
-            ts->setFreqMod((float)value / 1023.0f);
-            break;
-        case CTL_TIMBREMOD_AMOUNT:
-            ts->setTimbreMod((float)value / 1023.0f);
-            break;
-        case CTL_MORPHMOD_AMOUNT:
-            ts->setMorphMod((float)value / 1023.0f);
-            break;
-        case CTL_LPG_COLOUR:
-            ts->setLpgColour((float)value / 1023.0f);
-            break;
-        case CTL_DECAY:
-            ts->setOscillatorDecay((float)value / 1023.0f);
-            break;
-        case CTL_REV_SIZE:
-            ts->setReverbSize((float)value / 1023.0f);
-            break;
-        case CTL_REV_DEPTH:
-            ts->setReverbDepth(powf((value / 101.53), 3) / 1023.0f * MIX_LEVEL);
-            break;
-        case CTL_CHORUS_DEPTH:
-            ts->setChorusDepth(((float)value / 1023.0f));
+            //SW2 = select knob layer 1/2
             break;
         case CTL_HARMONICS:
-            ts->setOscillatorHarmonics((float)value / 1023.0f);
+            newValue = (float)value / 1023.0f;
+            if (valueInLatchRange(newValue, ts->getOscillatorHarmonics()))
+                ts->setOscillatorHarmonics(newValue);
             break;
         case CTL_MORPH:
-            ts->setOscillatorMorph((float)value / 1023.0f);
+            newValue = (float)value / 1023.0f;
+            if (valueInLatchRange(newValue, ts->getOscillatorMorph()))
+                ts->setOscillatorMorph(newValue);
             break;
         case CTL_TIMBRE:
-            ts->setOscillatorTimbre((float)value / 1023.0f);
+            newValue = (float)value / 1023.0f;
+            if (valueInLatchRange(newValue, ts->getOscillatorTimbre()))
+                ts->setOscillatorTimbre(newValue);
+            break;
+        case CTL_DECAY:
+            newValue = (float)value / 1023.0f;
+            if (valueInLatchRange(newValue, ts->getOscillatorDecay()))
+                ts->setOscillatorDecay(newValue);
             break;
         case CTL_BALANCE:
-            ts->setOscillatorBalance((float)value / 1023.0f);
+            newValue = (float)value / 1023.0f;
+            if (valueInLatchRange(newValue, ts->getOscillatorBalance()))
+                ts->setOscillatorBalance(newValue);
+            break;
+        case CTL_LPG_COLOUR:
+            newValue = (float)value / 1023.0f;
+            if (valueInLatchRange(newValue, ts->getLpgColour()))
+                ts->setLpgColour(newValue);
+            break;
+        case CTL_FREQMOD_AMOUNT:
+            newValue = -1.0f + ((float)value / 511.5f);
+            if (valueInLatchRange(newValue, ts->getFreqMod()))
+                ts->setFreqMod(newValue);
+            break;            
+        case CTL_TIMBREMOD_AMOUNT:
+            newValue = -1.0f + ((float)value / 511.5f);
+            if (valueInLatchRange(newValue, ts->getTimbreMod()))
+                ts->setTimbreMod(newValue);
+            break;
+        case CTL_MORPHMOD_AMOUNT:
+            newValue = -1.0f + ((float)value / 511.5f);
+            if (valueInLatchRange(newValue, ts->getMorphMod()))
+                ts->setMorphMod(newValue);
+            break;
+        case CTL_VOLUME:
+            newValue = (float)value / 1023.0f;
+            if (valueInLatchRange(newValue, ts->getVolume()))
+                ts->setVolume(newValue);
+            break;
+        case CTL_REV_SIZE:
+            newValue = (float)value / 1023.0f;
+            if (valueInLatchRange(newValue, ts->getReverbSize()))
+                ts->setReverbSize(newValue);
+            break;
+        case CTL_REV_DEPTH:
+            newValue = powf((value / 101.53), 3) / 1023.0f * MIX_LEVEL;
+            if (valueInLatchRange(newValue, ts->getReverbDepth()))
+                ts->setReverbDepth(newValue);
+            break;
+        case CTL_CHORUS_DEPTH:
+            newValue = (float)value / 1023.0f;
+            if (valueInLatchRange(newValue, ts->getChorusDepth()))
+                ts->setChorusDepth(newValue);
             break;
         case CTL_FLT_CUTOFF:
-        {
-            float new_cutoff = 30 + 12 * powf((value / 101.53), 3);
-
+            newValue = 30 + 12 * powf((value / 101.53), 3);
+            //if (valueInLatchRange(newValue, ts->getFilterCutoff()))
+            //{
             // The filter has a pretty nasty self-oscillation in higher frequencies when the Q is large enough, trying to prevent this..
-            if (ts->getFilterResonance() > 3.07 && new_cutoff > 10000)
+            if (ts->getFilterResonance() > 3.07 && newValue > 10000)
                 ts->setFilterResonance(3.0f);
-            ts->setFilterCutoff(new_cutoff);
+            ts->setFilterCutoff(newValue);
+            //}
             break;
-        }
         case CTL_FLT_RESO:
-        {
-            float new_reso = ((float)value / 1023.0f) * 4.0f;
-            if (ts->getFilterCutoff() > 10000 && new_reso > 3.0)
-                new_reso = 3.0f;
-            ts->setFilterResonance(new_reso);
+            newValue = ((float)value / 1023.0f) * 4.0f;
+            //if (valueInLatchRange(newValue, ts->getFilterResonance()))
+            //{
+            if (ts->getFilterCutoff() > 10000 && newValue > 3.0)
+                newValue = 3.0f;
+            ts->setFilterResonance(newValue);
+            //}
             break;
-        }
         default:
             break;
         }
